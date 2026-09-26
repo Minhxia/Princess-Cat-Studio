@@ -107,20 +107,25 @@ public class CharacterMovement3D : MonoBehaviour
     // Comprueba si el personaje puede levantarse
     public bool CanStandUp()
     {
-        // se comprueba el volumen que ocuparía el personaje de pie
-        // (se supone que la escala es 1,1,1)
-        // TODO: revisar si intersa multiplicar por 0.95, ya que la cápsula es un poco más pequeña que la real. Puede dar problemas con obstáculos muy ajustados
+        // se genera una cápsula imaginaria que representa el espacio que ocuparía 
+        // el personaje si se levantara (es ligeramente más pequeña, de ahí el 0.95)
+        // TODO: revisar si interesa multiplicar por 0.95, ya que la cápsula es un poco más pequeña que la real. Puede dar problemas con obstáculos muy ajustados
         float radius = _characterController.radius * 0.95f;
 
+        // se calcula la posición del centro del personaje en el mundo,
+        // y la posición de los pies
         Vector3 standingCenterWorld = transform.TransformPoint(_standingCenter);
+        // Y de los pies = Y del centro − media altura
         Vector3 feetWorld = standingCenterWorld - Vector3.up * (_standingHeight / 2f);
 
-        // se empieza a comprobar desde la parte alta del perosnaje agachado, para evitar
+        // se empieza a comprobar desde la parte alta del personaje agachado, para evitar
         // que el collider del personaje detecte una colisión con el suelo
         float lowerHeight = Mathf.Min(
             _crouchHeight, 
-            _standingHeight - _characterController.radius
+            _standingHeight - _characterController.radius // altura del centro del extremo redondeado superior de la cápsula
         );
+        // son los centros de los extremos redondeados de la cápsula, no el borde inferior
+        // y superior de la misma
         Vector3 lowerPoint = feetWorld + Vector3.up * lowerHeight;
         Vector3 upperPoint = feetWorld + Vector3.up * (_standingHeight - _characterController.radius);
        
