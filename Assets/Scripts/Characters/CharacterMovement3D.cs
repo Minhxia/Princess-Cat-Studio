@@ -1,6 +1,8 @@
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
+// Clase que gestiona el movimiento de un personaje en 3D,
+// incluyendo caminar, correr, agacharse y saltar
 public class CharacterMovement3D : MonoBehaviour
 {
     #region Variables
@@ -103,28 +105,28 @@ public class CharacterMovement3D : MonoBehaviour
 
     // TODO: comprobar si con los sprites de los personajes sigue funcionado bien
     // Comprueba si el personaje puede levantarse
-    private bool CanStandUp()
+    public bool CanStandUp()
     {
         // se comprueba el volumen que ocuparía el personaje de pie
         // (se supone que la escala es 1,1,1)
         // TODO: revisar si intersa multiplicar por 0.95, ya que la cápsula es un poco más pequeña que la real. Puede dar problemas con obstáculos muy ajustados
         float radius = _characterController.radius * 0.95f;
 
-        // se calcula la distancia desde el centro de la cápsula hasta el centro
-        // de cada extremo redondo (semiesferas)
-        float halfSegment = _standingHeight / 2f - _characterController.radius;
+        Vector3 standingCenterWorld = transform.TransformPoint(_standingCenter);
+        Vector3 feetWorld = standingCenterWorld - Vector3.up * (_standingHeight / 2f);
 
-        Vector3 center = transform.TransformPoint(_standingCenter); // posición local a posición del mundo
-        Vector3 bottom = center - Vector3.up * halfSegment; // bottom -> Y = 0,5
-        Vector3 top = center + Vector3.up * halfSegment;    // top    -> Y = 1,5
-        // son los centros de los extremos redondos (semiesferas), no los puntos más
-        // bajo y más alto de la cápsula
-
-        // se comprueba si hay colisiones con otros colliders en el volumen que 
-        // ocuparía el personaje de pie (en este caso, la cápsula)
+        // se empieza a comprobar desde la parte alta del perosnaje agachado, para evitar
+        // que el collider del personaje detecte una colisión con el suelo
+        float lowerHeight = Mathf.Min(
+            _crouchHeight, 
+            _standingHeight - _characterController.radius
+        );
+        Vector3 lowerPoint = feetWorld + Vector3.up * lowerHeight;
+        Vector3 upperPoint = feetWorld + Vector3.up * (_standingHeight - _characterController.radius);
+       
         // TODO: revisar si al poner el sprite de los personajes, el collider deja de ser una cápsula
         Collider[] hits = Physics.OverlapCapsule(
-            bottom, top, radius,
+            lowerPoint, upperPoint, radius,
             Physics.AllLayers,
             QueryTriggerInteraction.Ignore
         );
@@ -134,9 +136,11 @@ public class CharacterMovement3D : MonoBehaviour
             // significa que hay un obstáculo que impide levantarse
             if (!hit.transform.IsChildOf(transform))
             {
+                Debug.Log("[CharacterMovement3D] No se puede levantar, hay un obstáculo: " + hit.name);
                 return false;
             }
         }
+        Debug.Log("[CharacterMovement3D] Se puede levantar, no hay obstáculos");
         return true;
     }
     #endregion
@@ -173,7 +177,7 @@ public class CharacterMovement3D : MonoBehaviour
     }
     #endregion
 
-    #region Public Methods
+    #region Other Public Methods
     // Establece la dirección de movimiento del personaje
     public void SetMoveDirection(Vector3 direction)
     {
