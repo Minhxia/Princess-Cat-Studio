@@ -51,7 +51,9 @@ public class PlayerController : MonoBehaviour
         float vertical =
             (IsPressed(keyboard, _forwardKey) ? 1f : 0f) -
             (IsPressed(keyboard, _backwardKey) ? 1f : 0f);
-        _characterMovement.SetMoveDirection(new Vector3(horizontal, 0f, vertical));
+        // el giro de la cámara también afecta a la dirección de movimiento!
+        Vector3 moveDirection = transform.right * horizontal + transform.forward * vertical;
+        _characterMovement.SetMoveDirection(moveDirection);
 
         _characterMovement.SetRunning(IsPressed(keyboard, _runKey));
 

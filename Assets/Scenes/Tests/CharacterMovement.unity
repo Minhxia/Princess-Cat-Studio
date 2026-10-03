@@ -861,6 +861,7 @@ GameObject:
   - component: {fileID: 1795963582}
   - component: {fileID: 1795963581}
   - component: {fileID: 1795963584}
+  - component: {fileID: 1795963585}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -963,6 +964,22 @@ MonoBehaviour:
   _firstPersonaCamera: {fileID: 2090289970}
   _debugCamera: {fileID: 1109655273}
   switchCameraKey: 96
+--- !u!114 &1795963585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795963579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e790a6d989b2784ea66ed975a176c2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FirstPersonCameraController
+  _firstPersonCamera: {fileID: 2090289967}
+  _eyeHeightRatio: 0.8
+  _mouseSensitivity: 0.1
+  _maxVerticalAngle: 80
 --- !u!1 &2090289966
 GameObject:
   m_ObjectHideFlags: 0
