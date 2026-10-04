@@ -1,4 +1,3 @@
-using TMPro.EditorUtilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,6 +16,17 @@ public class FirstPersonCameraController : MonoBehaviour
     [Header("Look")]
     [SerializeField] private float _mouseSensitivity = 0.1f;
     [SerializeField] private float _maxVerticalAngle = 80f;
+
+    [Header("Head Bob")]
+    [SerializeField] private float _walkBobFrequency = 1.6f;
+    [SerializeField] private float _walkBobAmplitude = 0.02f;
+    [SerializeField] private float _runBobFrequency = 2.6f;
+    [SerializeField] private float _runBobAmplitude = 0.035f;
+    [SerializeField] private float _runSpeedThreshold = 4.5f;
+    [SerializeField] private float _bobReturnSpeed = 0.15f;
+
+    private float _bobPhase;
+    private float _bobOffset;
 
     private CharacterController _characterController;
     private float _verticalAngle;
@@ -107,9 +117,11 @@ public class FirstPersonCameraController : MonoBehaviour
         float feetHeight = _characterController.center.y - _characterController.height / 2f;
         float eyeHeight = feetHeight + _characterController.height * _eyeHeightRatio;
 
+        UpdateHeadBob();
+        
         // se conserva la posición local de la cámara en X y Z, y se ajusta solo la Y
         Vector3 cameraPosition = _firstPersonCamera.localPosition;
-        cameraPosition.y = eyeHeight;
+        cameraPosition.y = eyeHeight + _bobOffset;
         _firstPersonCamera.localPosition = cameraPosition;
     }
 
@@ -143,6 +155,37 @@ public class FirstPersonCameraController : MonoBehaviour
         CanUseHandObjects = false;
 
         Debug.Log("[FirstPersonCameraController] Cursor desbloqueado y visible. Se puede usar objetos con las manos? " + CanUseHandObjects);
+    }
+
+    // Actualiza el efecto "head bob" (movimiento de la cabeza al caminar/correr)
+    private void UpdateHeadBob()
+    {
+        Vector3 horizontalVelocity = _characterController.velocity;
+        horizontalVelocity.y = 0f;
+
+        float horizontalSpeed = horizontalVelocity.magnitude;
+
+        // se aplica el efecto solo si el personaje está en el suelo y se mueve
+        if (_characterController.isGrounded && horizontalSpeed > 0.1f)
+        {
+            bool isRunning = horizontalSpeed > _runSpeedThreshold;
+            float frequency = isRunning ? _runBobFrequency : _walkBobFrequency;
+            float amplitude = isRunning ? _runBobAmplitude : _walkBobAmplitude;
+
+            // el seno produce una pequeña oscilación de la cámara
+            _bobPhase += Time.deltaTime * frequency * 2f * Mathf.PI;
+            _bobOffset = Mathf.Sin(_bobPhase) * amplitude;
+        }
+        // si el personaje se para o salta, la oscilación vuelve a 0 de manera gradual
+        else
+        {
+            _bobPhase = 0f;
+            _bobOffset = Mathf.MoveTowards(
+                _bobOffset, 
+                0f, 
+                _bobReturnSpeed * Time.deltaTime
+            );
+        }
     }
     #endregion
 }
