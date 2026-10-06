@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 // Orden de ejecución del script:
 //[DefaultExecutionOrder(-1)] // para evitar que el script de las manos lea el fotograma anterior
 
-// Clase que controla la cámara en primera persona
+// Clase que controla la cámara en primera persona, con head bob
 public class FirstPersonCameraController : MonoBehaviour
 {
     #region Variables
@@ -136,7 +136,7 @@ public class FirstPersonCameraController : MonoBehaviour
     // Cursor desbloqueado/liberado: el cursor se muestra y se puede hacer click en los menús.
 
     // Bloquea el cursor y lo hace invisible
-    public void LockCursor()
+    private void LockCursor()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;

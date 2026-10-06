@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterMovement3D))]
+[RequireComponent(typeof(CharacterMovement3D), typeof(PlayerStamina))]
 
 // Clase que gestiona el control del jugador (lectura de entradas de teclado)
 public class PlayerController : MonoBehaviour
@@ -21,12 +21,14 @@ public class PlayerController : MonoBehaviour
     private bool _crouchToggled;
 
     private CharacterMovement3D _characterMovement;
+    private PlayerStamina _stamina;
     #endregion
 
     #region Unity Methods
     private void Awake()
     {
         _characterMovement = GetComponent<CharacterMovement3D>();
+        _stamina = GetComponent<PlayerStamina>();
     }
 
     private void Update()
@@ -35,7 +37,7 @@ public class PlayerController : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
 
         // TODO: revisar más adelante si se quiere permitir el uso de gamepads
-        // si no hay un teclado, se detiene el movimiento del personaje
+        // si no hay un teclado, se detiene el movimiento del jugador
         if (keyboard == null)
         {
             _characterMovement.SetMoveDirection(Vector3.zero);
@@ -59,12 +61,12 @@ public class PlayerController : MonoBehaviour
 
         if (_crouchKey != Key.None && keyboard[_crouchKey].wasPressedThisFrame)
         {
-            // si el personaje no está agachado, se agacha
+            // si el jugador no está agachado, se agacha
             if (!_crouchToggled)
             {
                 _crouchToggled = true;
             }
-            // si el personaje está agachado y ya puede levantarse, se mantiene agachado
+            // si el jugador está agachado y ya puede levantarse, se mantiene agachado
             // (así se evita que el jugador se levante automáticamente al salir de debajo del obstáculo,
             // y se mantiene agachado hasta que el jugador decida pulsar la tecla de agacharse otra vez)
             // es decir, como estaba antes planteado, si se pulsaba Crtl estando agachado debajo
@@ -78,6 +80,12 @@ public class PlayerController : MonoBehaviour
         }
         _characterMovement.SetCrouching(_crouchToggled);
 
+        // se actualiza la estamina del jugador y se indica si está corriendo
+        bool canRun = moveDirection.sqrMagnitude > 0f && !_crouchToggled;
+        bool isRunning = _stamina.UpdateStamina(IsPressed(keyboard, _runKey), canRun);
+        _characterMovement.SetRunning(isRunning);
+        //Debug.Log("[PlayerController] Está corriendo: " + isRunning + ", puede correr? " + canRun + ", estamina fill: " + _stamina.FillAmount.ToString("F2"));
+
         if (_jumpKey != Key.None && keyboard[_jumpKey].wasPressedThisFrame)
         {
             _characterMovement.RequestJump();
@@ -88,7 +96,7 @@ public class PlayerController : MonoBehaviour
     {
         if (_characterMovement == null) return;
 
-        // se detiene el movimiento del personaje al desactivar el script
+        // se detiene el movimiento del jugador al desactivar el script
         _characterMovement.SetMoveDirection(Vector3.zero);
         _characterMovement.SetRunning(false);
         _characterMovement.SetCrouching(false);
