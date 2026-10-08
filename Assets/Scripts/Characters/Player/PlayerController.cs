@@ -17,11 +17,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Key _jumpKey = Key.Space;
     [SerializeField] private Key _runKey = Key.LeftShift;
     [SerializeField] private Key _crouchKey = Key.LeftCtrl;
+    [SerializeField] private Key _pickupKey = Key.F;
 
     private bool _crouchToggled;
 
     private CharacterMovement3D _characterMovement;
     private PlayerStamina _stamina;
+    private PlayerItemInteraction _itemInteraction;
     #endregion
 
     #region Unity Methods
@@ -29,6 +31,7 @@ public class PlayerController : MonoBehaviour
     {
         _characterMovement = GetComponent<CharacterMovement3D>();
         _stamina = GetComponent<PlayerStamina>();
+        _itemInteraction = GetComponent<PlayerItemInteraction>();
     }
 
     private void Update()
@@ -59,6 +62,7 @@ public class PlayerController : MonoBehaviour
 
         _characterMovement.SetRunning(IsPressed(keyboard, _runKey));
 
+        // agacharse
         if (_crouchKey != Key.None && keyboard[_crouchKey].wasPressedThisFrame)
         {
             // si el jugador no está agachado, se agacha
@@ -80,15 +84,23 @@ public class PlayerController : MonoBehaviour
         }
         _characterMovement.SetCrouching(_crouchToggled);
 
+        // correr
         // se actualiza la estamina del jugador y se indica si está corriendo
         bool canRun = moveDirection.sqrMagnitude > 0f && !_crouchToggled;
         bool isRunning = _stamina.UpdateStamina(IsPressed(keyboard, _runKey), canRun);
         _characterMovement.SetRunning(isRunning);
         //Debug.Log("[PlayerController] Está corriendo: " + isRunning + ", puede correr? " + canRun + ", estamina fill: " + _stamina.FillAmount.ToString("F2"));
 
+        // salto
         if (_jumpKey != Key.None && keyboard[_jumpKey].wasPressedThisFrame)
         {
             _characterMovement.RequestJump();
+        }
+
+        // interacción con objetos
+        if (_pickupKey != Key.None && keyboard[_pickupKey].wasPressedThisFrame)
+        {
+            _itemInteraction.TryPickup();
         }
     }
 
