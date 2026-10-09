@@ -1,6 +1,8 @@
+using System.Runtime.ExceptionServices;
 using UnityEngine;
 
 // Clase que gestiona la interacción del jugador con objetos recogibles
+[RequireComponent(typeof(PlayerHands))]
 public class PlayerItemInteraction : MonoBehaviour
 {
     #region Variables
@@ -10,16 +12,34 @@ public class PlayerItemInteraction : MonoBehaviour
     [SerializeField, Min(0f)] private float _pickupCenterHeight = 1f;
     [SerializeField, Range(0.01f, 0.5f)] private float _aimTolerance = 0.18f;
     [SerializeField] private LayerMask _pickupLayerMask;
+
+    private PlayerHands _hands;
     #endregion
+
+    private void Awake()
+    {
+        _hands = GetComponent<PlayerHands>();
+    }
 
     #region Other Methods
     // Intentar recoger un objeto al alcance del jugador
     public void TryPickup()
     {
-        if(TryFindPickupItem(out GameObject item))
+        if (_hands == null)
         {
-            Debug.Log("[PlayerItemInteraction] Objeto recogible al alcance: " + item.name);
-            //TODO: pasar el item a una mano
+            Debug.LogWarning("[PlayerItemInteraction] Falta PlayerHands en este objeto.", this);
+            return;
+        }
+
+        if (!_hands.HasFreeHand)
+        {
+            Debug.Log("[PlayerItemInteraction] Las dos manos están ocupadas.");
+            return;
+        }
+
+        if(TryFindPickupItem(out GameObject item) && _hands.TryHold(item))
+        {
+            Debug.Log("[PlayerItemInteraction] Objeto recogido: " + item.name);
         }
     }
 
