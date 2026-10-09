@@ -21,8 +21,8 @@ public class PlayerItemInteraction : MonoBehaviour
         _hands = GetComponent<PlayerHands>();
     }
 
-    #region Other Methods
-    // Intentar recoger un objeto al alcance del jugador
+    #region Hands Methods
+    // Intenta recoger un objeto al alcance del jugador
     public void TryPickup()
     {
         if (_hands == null)
@@ -42,6 +42,23 @@ public class PlayerItemInteraction : MonoBehaviour
             Debug.Log("[PlayerItemInteraction] Objeto recogido: " + item.name);
         }
     }
+
+    public void TryDropLeft()
+    {
+        if (_hands != null)
+        {
+            _hands.TryDropLeft();
+        }
+    }
+
+    public void TryDropRight()
+    {
+        if (_hands != null)
+        {
+            _hands.TryDropRight();
+        }
+    }
+
 
     // Intenta encontrar un objeto al alcance del jugador y si lo hay, lo devuelve
     // (este tiene que estar dentro del área de recogida y el jugador tiene que estar mirando hacia él)
@@ -135,7 +152,9 @@ public class PlayerItemInteraction : MonoBehaviour
         }
         return false;
     }
+    #endregion
 
+    #region Debug Methods
     // Debug visual de la zona de recogida + mirada del jugador
     private void OnDrawGizmosSelected()
     {

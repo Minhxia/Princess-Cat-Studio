@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Key _runKey = Key.LeftShift;
     [SerializeField] private Key _crouchKey = Key.LeftCtrl;
     [SerializeField] private Key _pickupKey = Key.F;
+    [SerializeField] private Key _dropLeftKey = Key.Q;
+    [SerializeField] private Key _dropRightKey = Key.E;
 
     private bool _crouchToggled;
 
@@ -39,7 +41,7 @@ public class PlayerController : MonoBehaviour
         // se obtiene el teclado actual
         Keyboard keyboard = Keyboard.current;
 
-        // TODO: revisar más adelante si se quiere permitir el uso de gamepads
+        // TODO: revisar más adelante si se quiere permitir el uso de gamepads o cambiar los controles
         // si no hay un teclado, se detiene el movimiento del jugador
         if (keyboard == null)
         {
@@ -97,10 +99,19 @@ public class PlayerController : MonoBehaviour
             _characterMovement.RequestJump();
         }
 
-        // interacción con objetos
+        // coger objetos
         if (_pickupKey != Key.None && keyboard[_pickupKey].wasPressedThisFrame)
         {
             _itemInteraction.TryPickup();
+        }
+        // soltar objetos
+        if (_dropLeftKey != Key.None && keyboard[_dropLeftKey].wasPressedThisFrame)
+        {
+            _itemInteraction.TryDropLeft();
+        }
+        if (_dropRightKey != Key.None && keyboard[_dropRightKey].wasPressedThisFrame)
+        {
+            _itemInteraction.TryDropRight();
         }
     }
 

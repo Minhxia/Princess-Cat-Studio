@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // Clase que gestiona los objetos en las manos del jugador
@@ -11,12 +12,14 @@ public class PlayerHands : MonoBehaviour
     // este campo no hay que rellenarlo en el Inspector, es solo info para debug
     [Header("Held items (runtime, do not fill)")]
     [SerializeField] private GameObject _leftItem;
-    [SerializeField] private GameObject _rightItem;
+    [SerializeField] private GameObject _rightItem;  
     #endregion
 
+    #region Hold Methods
     // Consulta si hay al menos una mano libre
     public bool HasFreeHand => _leftItem == null || _rightItem == null;
 
+    // Intenta sostener en una mano un objeto al alcance del jugador
     public bool TryHold(GameObject item)
     {
         // si no se recibe ningún objeto o ese objeto ya está en una de las manos
@@ -80,4 +83,53 @@ public class PlayerHands : MonoBehaviour
 
         return true;
     }
+    #endregion
+
+    #region Drop Methods
+    // Intenta soltar un objeto
+    private bool TryDrop (ref GameObject heldItem)
+    {
+        if (heldItem == null) {
+            Debug.Log("[PlayerHands] No hay ningún objeto para soltar.");
+            return false;
+        }
+
+        // al soltar el objeto, solo se conserva la posición del padre
+        heldItem.transform.SetParent(null, true);
+
+        // el resto de la configuración de las físicas se restablece
+        Rigidbody body = heldItem.GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.isKinematic = false;
+            body.useGravity = true;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+        foreach (Collider collider in heldItem.GetComponentsInChildren<Collider>(true))
+        {
+            collider.enabled = true;
+        }
+        if (body != null)
+        {
+            body.WakeUp();
+        }
+        
+        Debug.Log("[PlayerHands] Ha soltado el objeto: " + heldItem.name);
+        heldItem = null;
+        return true;
+    }
+
+    // Intenta soltar el objeto de la mano izquierda
+    public bool TryDropLeft()
+    {
+        return TryDrop(ref _leftItem);
+    }
+
+    // Intenta soltar el objeto de la mano derecha
+    public bool TryDropRight()
+    {
+        return TryDrop(ref _rightItem);
+    }
+    #endregion
 }
