@@ -1,6 +1,9 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
+
 [RequireComponent(typeof(CharacterController))]
+
 // Clase que gestiona el movimiento de un personaje en 3D,
 // incluyendo caminar, correr, agacharse y saltar
 public class CharacterMovement3D : MonoBehaviour

@@ -1,7 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterMovement3D), typeof(PlayerStamina))]
+[DisallowMultipleComponent]
+
+[RequireComponent(typeof(CharacterMovement3D), typeof(PlayerStamina), typeof(PlayerItemInteraction))]
+[RequireComponent(typeof(PlayerHands), typeof(FirstPersonCameraController))]
 
 // Clase que gestiona el control del jugador (lectura de entradas de teclado)
 public class PlayerController : MonoBehaviour
@@ -22,10 +25,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Key _dropRightKey = Key.E;
 
     private bool _crouchToggled;
-
     private CharacterMovement3D _characterMovement;
     private PlayerStamina _stamina;
+
     private PlayerItemInteraction _itemInteraction;
+    private PlayerHands _hands;
+    private FirstPersonCameraController _firstPersonCameraController;
+    private bool _readyForHandInput;
     #endregion
 
     #region Unity Methods
@@ -34,10 +40,14 @@ public class PlayerController : MonoBehaviour
         _characterMovement = GetComponent<CharacterMovement3D>();
         _stamina = GetComponent<PlayerStamina>();
         _itemInteraction = GetComponent<PlayerItemInteraction>();
+        _hands = GetComponent<PlayerHands>();
+        _firstPersonCameraController = GetComponent<FirstPersonCameraController>();
     }
 
     private void Update()
     {
+        UpdateHandUse();
+
         // se obtiene el teclado actual
         Keyboard keyboard = Keyboard.current;
 
@@ -137,6 +147,55 @@ public class PlayerController : MonoBehaviour
         return key != Key.None && keyboard[key].isPressed;
     }
 
+    // Lee los clicks y los "envía" a la mano adecuada
+    private void UpdateHandUse()
+    {
+        Mouse mouse = Mouse.current;
+        // se comprueba si se pueden usar objetos
+        bool canUse = mouse != null && _hands != null 
+            && _firstPersonCameraController != null
+            && _firstPersonCameraController.isActiveAndEnabled
+            && _firstPersonCameraController.CanUseHandObjects
+            && Cursor.lockState == CursorLockMode.Locked;
+
+        // en caso de que no se pueda, termina su uso
+        if (!canUse)
+        {
+            StopUsingHands();
+            return;
+        }
+
+        // se controla que al capturar al cursor no se active un objeto de una mano
+        if (!_readyForHandInput)
+        {
+            if (!mouse.leftButton.isPressed && !mouse.rightButton.isPressed)
+            {
+                _readyForHandInput = true;
+            }
+            return;
+        }
+
+        // uso del objeto con los clicks (se pueden usar los dos objetos a la vez)
+        if (mouse.leftButton.wasPressedThisFrame) {
+            Debug.Log("[PlayerController] Pulsación del click izquierdo.");
+            _hands.BeginUseLeft();
+        }
+        if (mouse.leftButton.wasReleasedThisFrame)  _hands.EndUseLeft();
+
+        if (mouse.rightButton.wasPressedThisFrame)  _hands.BeginUseRight();
+        if (mouse.rightButton.wasReleasedThisFrame) _hands.EndUseRight();
+    }
+
+    // Termina el uso de un objeto cuando ya no se pueden usar más (por ejemplo, en los menús)
+    private void StopUsingHands()
+    {
+        _readyForHandInput = false;
+
+        if (_hands == null) return;
+
+        _hands.EndUseLeft();
+        _hands.EndUseRight();
+    }
     #endregion
 
 }

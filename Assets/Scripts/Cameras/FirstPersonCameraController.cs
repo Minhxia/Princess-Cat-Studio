@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CharacterController))]
-// Orden de ejecución del script:
-//[DefaultExecutionOrder(-1)] // para evitar que el script de las manos lea el fotograma anterior
+[DisallowMultipleComponent]
 
+// Orden de ejecución del script:
+[DefaultExecutionOrder(-1)] // para evitar que el script de las manos lea el fotograma anterior
+
+[RequireComponent(typeof(CharacterController))]
 // Clase que controla la cámara en primera persona, con head bob
 public class FirstPersonCameraController : MonoBehaviour
 {
@@ -140,8 +142,9 @@ public class FirstPersonCameraController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-        _waitingForCaptureClickRelease = false;
-        CanUseHandObjects = true;
+
+        _waitingForCaptureClickRelease = true;
+        CanUseHandObjects = false;
 
         Debug.Log("[FirstPersonCameraController] Cursor bloqueado y oculto. Se puede usar objetos con las manos? " + CanUseHandObjects);
     }
@@ -151,6 +154,7 @@ public class FirstPersonCameraController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
         _waitingForCaptureClickRelease = true;
         CanUseHandObjects = false;
 

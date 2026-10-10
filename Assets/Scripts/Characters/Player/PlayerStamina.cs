@@ -1,5 +1,7 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
+
 // Clase que gestiona la estamina del jugador
 public class PlayerStamina : MonoBehaviour
 {

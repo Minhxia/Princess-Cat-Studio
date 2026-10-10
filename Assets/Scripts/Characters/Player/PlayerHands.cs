@@ -1,7 +1,8 @@
-using System;
 using UnityEngine;
 
-// Clase que gestiona los objetos en las manos del jugador
+[DisallowMultipleComponent]
+
+// Clase que gestiona los objetos en las manos del jugador (dos como máximo, uno en cada mano)
 public class PlayerHands : MonoBehaviour
 {
     #region Variables
@@ -13,6 +14,9 @@ public class PlayerHands : MonoBehaviour
     [Header("Held items (runtime, do not fill)")]
     [SerializeField] private GameObject _leftItem;
     [SerializeField] private GameObject _rightItem;  
+
+    private GameObject _leftUsedItem;
+    private GameObject _rightUsedItem;
     #endregion
 
     #region Hold Methods
@@ -130,6 +134,63 @@ public class PlayerHands : MonoBehaviour
     public bool TryDropRight()
     {
         return TryDrop(ref _rightItem);
+    }
+    #endregion
+    
+    #region Use Methods
+    // Inicia el uso del objeto
+    private void BeginUse(GameObject heldItem, ref GameObject usedItem)
+    {
+        // si ya se está usando un objeto o si la mano está vacía, sale
+        if (usedItem != null || heldItem == null) return;
+
+        IHandUsable usable = heldItem.GetComponent<IHandUsable>();
+        if (usable == null) return;
+
+        // se inicia el uso del objeto
+        usedItem = heldItem;
+        usable.OnUsePressed();
+    }
+
+    // Termina el uso del objeto
+    private void EndUse(ref GameObject usedItem)
+    {
+        GameObject item = usedItem;
+        usedItem = null;
+        if (item != null)
+        {
+            item.GetComponent<IHandUsable>()?.OnUseReleased();
+        }
+    }
+
+    // Inicia el uso del objeto de la mano izquierda
+    public void BeginUseLeft()
+    {
+        BeginUse(_leftItem, ref _leftUsedItem);
+    }
+
+    // Termina el uso del objeto de la mano izquierda
+    public void EndUseLeft()
+    {
+        EndUse(ref _leftUsedItem);
+    }
+
+    // Inicia el uso del objeto de la mano derecha
+    public void BeginUseRight()
+    {
+        BeginUse(_rightItem, ref _rightUsedItem);
+    }
+
+    // Termina el uso del objeto de la mano derecha
+    public void EndUseRight()
+    {
+        EndUse(ref _rightUsedItem);
+    }
+
+    private void OnDisable()
+    {
+        EndUseLeft();
+        EndUseRight();
     }
     #endregion
 }
