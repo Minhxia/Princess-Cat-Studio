@@ -157,7 +157,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 550, y: 275}
+  m_AnchoredPosition: {x: 550, y: 325}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &125379146
@@ -614,7 +614,7 @@ MonoBehaviour:
         m_MethodName: OpenPanel
         m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 1196141795}
+          m_ObjectArgument: {fileID: 125379146}
           m_ObjectArgumentAssemblyTypeName: HorrorGame.UI.UIPanel, Assembly-CSharp
           m_IntArgument: 0
           m_FloatArgument: 0
