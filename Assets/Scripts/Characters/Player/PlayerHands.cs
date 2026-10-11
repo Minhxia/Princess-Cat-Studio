@@ -19,10 +19,13 @@ public class PlayerHands : MonoBehaviour
     private GameObject _rightUsedItem;
     #endregion
 
+    public GameObject LeftItem => _leftItem;
+    public GameObject RightItem => _rightItem;
+
     #region Hold Methods
     // Consulta si hay al menos una mano libre
     public bool HasFreeHand => _leftItem == null || _rightItem == null;
-
+    
     // Intenta sostener en una mano un objeto al alcance del jugador
     public bool TryHold(GameObject item)
     {

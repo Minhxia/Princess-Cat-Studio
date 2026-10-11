@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+// Clase que gestiona la barra de estamina del jugador (visual, ui)
 public class StaminaBarUI : MonoBehaviour
 {
     [SerializeField] private PlayerStamina _stamina;
