@@ -13,7 +13,7 @@ public class PlayerHands : MonoBehaviour
     // este campo no hay que rellenarlo en el Inspector, es solo info para debug
     [Header("Held items (runtime, do not fill)")]
     [SerializeField] private GameObject _leftItem;
-    [SerializeField] private GameObject _rightItem;  
+    [SerializeField] private GameObject _rightItem;
 
     private GameObject _leftUsedItem;
     private GameObject _rightUsedItem;
@@ -25,7 +25,7 @@ public class PlayerHands : MonoBehaviour
     #region Hold Methods
     // Consulta si hay al menos una mano libre
     public bool HasFreeHand => _leftItem == null || _rightItem == null;
-    
+
     // Intenta sostener en una mano un objeto al alcance del jugador
     public bool TryHold(GameObject item)
     {
@@ -94,9 +94,10 @@ public class PlayerHands : MonoBehaviour
 
     #region Drop Methods
     // Intenta soltar un objeto
-    private bool TryDrop (ref GameObject heldItem)
+    private bool TryDrop(ref GameObject heldItem)
     {
-        if (heldItem == null) {
+        if (heldItem == null)
+        {
             Debug.Log("[PlayerHands] No hay ningún objeto para soltar.");
             return false;
         }
@@ -121,7 +122,7 @@ public class PlayerHands : MonoBehaviour
         {
             body.WakeUp();
         }
-        
+
         Debug.Log("[PlayerHands] Ha soltado el objeto: " + heldItem.name);
         heldItem = null;
         return true;
@@ -139,13 +140,36 @@ public class PlayerHands : MonoBehaviour
         return TryDrop(ref _rightItem);
     }
     #endregion
-    
+
     #region Use Methods
     // Inicia el uso del objeto
-    private void BeginUse(GameObject heldItem, ref GameObject usedItem)
+    private void BeginUse(GameObject heldItem, GameObject otherHandItem, ref GameObject usedItem)
     {
         // si ya se está usando un objeto o si la mano está vacía, sale
         if (usedItem != null || heldItem == null) return;
+
+        // objeto que se usa sobre otro objeto
+        IHandConsumableWithOtherHand consumable = heldItem.GetComponent<IHandConsumableWithOtherHand>();
+        if (consumable != null)
+        {
+            if (!consumable.TryUse(otherHandItem)) return;
+
+            // se libera la mano al usar el objeto
+            if (_leftItem == heldItem)
+            {
+                _leftItem = null;
+            }
+            else if (_rightItem == heldItem)
+            {
+                _rightItem = null;
+            }
+            // y se destruye
+            Debug.Log("[PlayerHands] Has usado: " + heldItem.name + " en: " + otherHandItem.name);
+            heldItem.SetActive(false);
+            Destroy(heldItem);
+
+            return;
+        }
 
         IHandUsable usable = heldItem.GetComponent<IHandUsable>();
         if (usable == null) return;
@@ -169,7 +193,7 @@ public class PlayerHands : MonoBehaviour
     // Inicia el uso del objeto de la mano izquierda
     public void BeginUseLeft()
     {
-        BeginUse(_leftItem, ref _leftUsedItem);
+        BeginUse(_leftItem, _rightItem, ref _leftUsedItem);
     }
 
     // Termina el uso del objeto de la mano izquierda
@@ -181,7 +205,7 @@ public class PlayerHands : MonoBehaviour
     // Inicia el uso del objeto de la mano derecha
     public void BeginUseRight()
     {
-        BeginUse(_rightItem, ref _rightUsedItem);
+        BeginUse(_rightItem, _leftItem, ref _rightUsedItem);
     }
 
     // Termina el uso del objeto de la mano derecha

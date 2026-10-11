@@ -10,7 +10,7 @@ public class PlayerItemInteraction : MonoBehaviour
     [SerializeField] private Transform _firstPersonCamera;
     [SerializeField, Min(0.1f)] private float _pickupRadius = 2.5f;
     [SerializeField, Min(0f)] private float _pickupCenterHeight = 1f;
-    [SerializeField, Range(0.01f, 0.5f)] private float _aimTolerance = 0.18f;
+    [SerializeField, Range(0.01f, 0.9f)] private float _aimTolerance = 0.18f;
     [SerializeField] private LayerMask _pickupLayerMask;
 
     private PlayerHands _hands;
@@ -42,23 +42,6 @@ public class PlayerItemInteraction : MonoBehaviour
             Debug.Log("[PlayerItemInteraction] Objeto recogido: " + item.name);
         }
     }
-
-    public void TryDropLeft()
-    {
-        if (_hands != null)
-        {
-            _hands.TryDropLeft();
-        }
-    }
-
-    public void TryDropRight()
-    {
-        if (_hands != null)
-        {
-            _hands.TryDropRight();
-        }
-    }
-
 
     // Intenta encontrar un objeto al alcance del jugador y si lo hay, lo devuelve
     // (este tiene que estar dentro del área de recogida y el jugador tiene que estar mirando hacia él)
@@ -151,6 +134,24 @@ public class PlayerItemInteraction : MonoBehaviour
             return true;
         }
         return false;
+    }    
+
+    // Intenta soltar el objeto de la mano izquierda
+    public void TryDropLeft()
+    {
+        if (_hands != null)
+        {
+            _hands.TryDropLeft();
+        }
+    }
+
+    // Intenta soltar el objeto de la mano derecha
+    public void TryDropRight()
+    {
+        if (_hands != null)
+        {
+            _hands.TryDropRight();
+        }
     }
     #endregion
 
