@@ -37,7 +37,7 @@ public class CharacterHearing :MonoBehaviour
         if (blocked) efectiveRadius *= 0.35f;
         if (distance > efectiveRadius) return;
 
-        Debug.Log(name + "he oido algo.");
+        Debug.Log(name + " he oido algo.");
 
         if(personaje != null &&personaje.isOnNavMesh)
         {
