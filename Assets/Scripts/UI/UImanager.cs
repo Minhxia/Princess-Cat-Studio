@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace HorrorGame.UI
 {
@@ -122,6 +123,26 @@ namespace HorrorGame.UI
             Time.timeScale = pause ? 0f : 1f;
             Cursor.lockState = showCursor ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = showCursor;
+        }
+
+        public void ReturnToMainMenu(string sceneName)
+        {
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogError(
+                    $"No se puede cargar la escena '{sceneName}'. " +
+                    "Comprueba su nombre y la Scene List.",
+                    this
+                );
+                return;
+            }
+
+            Time.timeScale = 1f;
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
         }
     }
 }
