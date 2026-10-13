@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using HorrorGame.UI;
+
 
 [DisallowMultipleComponent]
 
@@ -53,6 +55,15 @@ public class FirstPersonCameraController : MonoBehaviour
 
     private void Update()
     {
+        // UIManager controla el cursor mientras haya un menu abierto.
+        // No capturamos clics ni movemos la camara durante la pausa.
+        if (UIManager.Instance != null && UIManager.Instance.IsAnyMenuOpen)
+        {
+            _waitingForCaptureClickRelease = true;
+            CanUseHandObjects = false;
+            return;
+        }
+
         Keyboard keyboard = Keyboard.current;
         Mouse mouse = Mouse.current;
 
