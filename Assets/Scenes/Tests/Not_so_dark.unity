@@ -4240,7 +4240,6 @@ MonoBehaviour:
   _backwardKey: 33
   _leftKey: 15
   _rightKey: 18
-  _jumpKey: 1
   _runKey: 51
   _crouchKey: 55
   _pickupKey: 20
@@ -4321,14 +4320,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFootSteps
   walkClips:
-  - {fileID: 8300000, guid: 181df72378e0060438d0c89db1d4f00d, type: 3}
+  - {fileID: 8300000, guid: ff36b38e84fb8b14797288e3b694fa23, type: 3}
+  - {fileID: 8300000, guid: 7624e8bd13558ec4fbdb159ac4cc6277, type: 3}
+  - {fileID: 8300000, guid: 0c8b5a32b5effed4baea78cb4c2a21bd, type: 3}
+  - {fileID: 8300000, guid: 38d3ad7521e6ac34e94defd7623c64c5, type: 3}
+  - {fileID: 8300000, guid: 6bceeb653b72ce6499f80c169c84382c, type: 3}
+  - {fileID: 8300000, guid: 45b83355616b67045ba37c113270fdc6, type: 3}
+  - {fileID: 8300000, guid: 292bcb03bf83b154693c35bc44ae1245, type: 3}
+  - {fileID: 8300000, guid: 124bd38af731fbe44a70d49fc8a08e40, type: 3}
   runClips:
-  - {fileID: 8300000, guid: 4483bf3a0f5343045a421a8be472d72b, type: 3}
+  - {fileID: 8300000, guid: ff36b38e84fb8b14797288e3b694fa23, type: 3}
+  - {fileID: 8300000, guid: 7624e8bd13558ec4fbdb159ac4cc6277, type: 3}
+  - {fileID: 8300000, guid: 0c8b5a32b5effed4baea78cb4c2a21bd, type: 3}
+  - {fileID: 8300000, guid: 38d3ad7521e6ac34e94defd7623c64c5, type: 3}
+  - {fileID: 8300000, guid: 6bceeb653b72ce6499f80c169c84382c, type: 3}
+  - {fileID: 8300000, guid: 45b83355616b67045ba37c113270fdc6, type: 3}
+  - {fileID: 8300000, guid: 292bcb03bf83b154693c35bc44ae1245, type: 3}
+  - {fileID: 8300000, guid: 124bd38af731fbe44a70d49fc8a08e40, type: 3}
   _walkInterval: 0.5
   _runInterval: 0.3
-  _runSpeed: 4
+  _runSpeed: 6
   _walkRadius: 5
   _runRadius: 12
+  _crouchVolumeMultiplier: 0.35
+  _crouchRadius: 2.5
 --- !u!82 &689109959
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4341,7 +4356,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
