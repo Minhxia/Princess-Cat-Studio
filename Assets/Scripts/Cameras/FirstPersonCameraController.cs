@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using HorrorGame.UI;
-
 
 [DisallowMultipleComponent]
 
@@ -34,7 +32,9 @@ public class FirstPersonCameraController : MonoBehaviour
 
     private CharacterController _characterController;
     private float _verticalAngle;
+
     private bool _waitingForCaptureClickRelease = true;
+    private bool _isPaused;
 
     public bool CanUseHandObjects { get; private set; } 
     #endregion
@@ -55,25 +55,10 @@ public class FirstPersonCameraController : MonoBehaviour
 
     private void Update()
     {
-        // UIManager controla el cursor mientras haya un menu abierto.
-        // No capturamos clics ni movemos la camara durante la pausa.
-        if (UIManager.Instance != null && UIManager.Instance.IsAnyMenuOpen)
-        {
-            _waitingForCaptureClickRelease = true;
-            CanUseHandObjects = false;
-            return;
-        }
+        // si el menú de pausa está abierto, sale
+        if (_isPaused) return;
 
-        Keyboard keyboard = Keyboard.current;
         Mouse mouse = Mouse.current;
-
-        // se desbloquea el cursor al pulsar ESC
-        if (keyboard !=null && keyboard.escapeKey.wasPressedThisFrame)
-        {
-            UnlockCursor();
-            return;
-        }
-
         // en caso de que no haya un ratón conectado, se desactiva usar objetos con las manos
         if (mouse == null)
         {
@@ -126,6 +111,9 @@ public class FirstPersonCameraController : MonoBehaviour
 
     private void LateUpdate()
     {
+        // si el menú de pausa está abierto, sale
+        if (_isPaused) return;
+
         // se ajusta la cámara a la altura de los ojos del personaje, que cambia al agacharse
         float feetHeight = _characterController.center.y - _characterController.height / 2f;
         float eyeHeight = feetHeight + _characterController.height * _eyeHeightRatio;
@@ -170,6 +158,21 @@ public class FirstPersonCameraController : MonoBehaviour
         CanUseHandObjects = false;
 
         Debug.Log("[FirstPersonCameraController] Cursor desbloqueado y visible. Se puede usar objetos con las manos? " + CanUseHandObjects);
+    }
+
+    // Libera o captura el ratón en función de si la partida está pausada
+    public void SetPaused(bool paused)
+    {
+        _isPaused = paused;
+
+        if(paused)
+        {
+            UnlockCursor();
+        }
+        else
+        {
+            LockCursor();
+        }
     }
 
     // Actualiza el efecto "head bob" (movimiento de la cabeza al caminar/correr)
