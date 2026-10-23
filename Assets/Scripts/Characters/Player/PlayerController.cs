@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Key _rightKey = Key.D;
 
     [Header("Action keys")]
-    [SerializeField] private Key _jumpKey = Key.Space;
+    //[SerializeField] private Key _jumpKey = Key.Space;
     [SerializeField] private Key _runKey = Key.LeftShift;
     [SerializeField] private Key _crouchKey = Key.LeftCtrl;
     [SerializeField] private Key _pickupKey = Key.F;
@@ -103,11 +103,12 @@ public class PlayerController : MonoBehaviour
         _characterMovement.SetRunning(isRunning);
         //Debug.Log("[PlayerController] Está corriendo: " + isRunning + ", puede correr? " + canRun + ", estamina fill: " + _stamina.FillAmount.ToString("F2"));
 
+        /*
         // salto
         if (_jumpKey != Key.None && keyboard[_jumpKey].wasPressedThisFrame)
         {
             _characterMovement.RequestJump();
-        }
+        }*/
 
         // coger objetos
         if (_pickupKey != Key.None && keyboard[_pickupKey].wasPressedThisFrame)

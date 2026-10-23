@@ -34,6 +34,8 @@ public class CharacterMovement3D : MonoBehaviour
     private bool _isCrouching;
     #endregion
 
+    public bool IsCrouching => _isCrouching; // para poder leerla desde PlayerFootSteps
+
     #region Unity Methods
     private void Awake()
     {

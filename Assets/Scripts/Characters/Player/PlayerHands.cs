@@ -10,6 +10,10 @@ public class PlayerHands : MonoBehaviour
     [SerializeField] private Transform _leftHandGrip;
     [SerializeField] private Transform _rightHandGrip;
 
+    // para poder comenzar con el mechero equipado desde el inicio
+    [Header("Starting item")]
+    [SerializeField] private GameObject _startingItem;
+
     // este campo no hay que rellenarlo en el Inspector, es solo info para debug
     [Header("Held items (runtime, do not fill)")]
     [SerializeField] private GameObject _leftItem;
@@ -21,6 +25,19 @@ public class PlayerHands : MonoBehaviour
 
     public GameObject LeftItem => _leftItem;
     public GameObject RightItem => _rightItem;
+
+
+    private void Start()
+    {
+        // si no se equipa nada desde el incio, sale
+        if (_startingItem == null) return;
+
+        if (!TryHold(_startingItem))
+        {
+            Debug.LogWarning("[PlayerHands] No se ha podido equipar el objeto inicial: " 
+                + _startingItem.name, this);
+        }
+    }
 
     #region Hold Methods
     // Consulta si hay al menos una mano libre
