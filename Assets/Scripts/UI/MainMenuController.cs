@@ -1,44 +1,89 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace HorrorGame.UI
+// Clase que gestiona los menús de la interfaz
+public class MainMenuController : MonoBehaviour
 {
-    /// <summary>
-    /// Actions of the main menu buttons that are NOT about opening panels
-    /// (opening/closing panels is UIManager's job).
-    /// JUGAR -> PlayGame(), SALIR -> QuitGame().
-    /// </summary>
-    public class MainMenuController : MonoBehaviour
+    [Header("Game scene")]
+    [SerializeField] private string gameplaySceneName = "Game";
+
+    [Header("Canvas panels")]
+    [SerializeField] private GameObject _mainMenuPanel;
+    [SerializeField] private GameObject _settingsPanel;
+    [SerializeField] private GameObject _achievementsPanel;
+    [SerializeField] private GameObject _creditsPanel;
+
+    private void Awake()
     {
-        [Tooltip("Exact name of the scene loaded by JUGAR (case-sensitive). " +
-                 "It must be added in File > Build Profiles > Scene List.")]
-        [SerializeField] private string gameSceneName = "LevelX";
+        // se libera y se muestra el cursor
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-        /// <summary>Loads the game scene. Called by Btn_Jugar.</summary>
-        public void PlayGame()
+        // en caso de volver al menú principal desde el menú de pausa del juego,
+        // se resetea el tiempo a su velocidad normal
+        Time.timeScale = 1f;
+
+        if (_mainMenuPanel == null || _settingsPanel == null ||
+            _achievementsPanel == null || _creditsPanel == null)
         {
-            // Fail with a clear message instead of Unity's generic error
-            // if the name is wrong or the scene is missing from the Scene List.
-            if (!Application.CanStreamedLevelBeLoaded(gameSceneName))
-            {
-                Debug.LogError($"[MainMenu] Scene '{gameSceneName}' can't be loaded. " +
-                               "Check the spelling and that it is in File > Build Profiles > Scene List.", this);
-                return;
-            }
-
-            SceneManager.LoadScene(gameSceneName);
+            Debug.LogError("[MainMenuController] Asigna todos los paneles en el Inspector.", this);
+            return;
         }
 
-        /// <summary>Closes the game. Called by Btn_Salir.</summary>
-        public void QuitGame()
-        {
-#if UNITY_EDITOR
-            // Application.Quit() is ignored inside the editor,
-            // so in the editor we stop Play mode instead.
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
-        }
+        ShowMainMenu();
     }
+
+    // Jugar
+    public void Play()
+    {
+        if (string.IsNullOrWhiteSpace(gameplaySceneName) ||
+            !Application.CanStreamedLevelBeLoaded(gameplaySceneName))
+        {
+            Debug.LogError("[MainMenuController] La escena del juego no existe o no esta incluida en la lista de escenas de la build.", this);
+            return;
+        }
+
+        SceneManager.LoadScene(gameplaySceneName);
+    }
+
+    // Salir
+    public void Exit()
+    {
+        // para salir del juego desde el editor
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        // y desde la web
+        #else
+            Application.Quit();
+        #endif
+    }
+
+    // Abre los enlaces a las cuentas de nuestras redes sociales
+    public void OpenSocialLink(string url)
+    {
+        Application.OpenURL(url);
+    }
+
+
+    // Muestra un panel (uno de los menús) y oculta el resto
+    private void ShowPanel(GameObject selectedPanel)
+    {
+        if (selectedPanel == null)
+        {
+            Debug.LogError("[MainMenuController] Falta asignar el panel solicitado.", this);
+            return;
+        }
+
+        _mainMenuPanel.SetActive(selectedPanel == _mainMenuPanel);
+        _settingsPanel.SetActive(selectedPanel == _settingsPanel);
+        _achievementsPanel.SetActive(selectedPanel == _achievementsPanel);
+        _creditsPanel.SetActive(selectedPanel == _creditsPanel);
+    }
+
+    #region Navigation Methods
+    public void ShowMainMenu() => ShowPanel(_mainMenuPanel);
+    public void ShowSettings() => ShowPanel(_settingsPanel);
+    public void ShowAchievements() => ShowPanel(_achievementsPanel);
+    public void ShowCredits() => ShowPanel(_creditsPanel);
+    #endregion
 }

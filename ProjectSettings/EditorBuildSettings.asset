@@ -7,9 +7,12 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/Main/MainMenu.unity
-    guid: cd3f01714ba18dbe88377173b2045c34
+    guid: 7819baf864e05164096ae568525de826
   - enabled: 1
-    path: Assets/Scenes/Main/Game.unity
-    guid: 855f50abb88c0604c803156fd0092f80
+    path: Assets/Scenes/Tests/Not_so_dark.unity
+    guid: 93abef0f4786c274e9b158588c82affc
+  - enabled: 1
+    path: Assets/Scenes/Main/GameOver.unity
+    guid: a0352e679d5474c408da7909d76d307a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
