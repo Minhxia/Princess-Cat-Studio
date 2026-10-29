@@ -1,5 +1,6 @@
-using System.Runtime.ExceptionServices;
 using UnityEngine;
+using TMPro;
+using Unity.VisualScripting;
 
 // Clase que gestiona la interacción del jugador con objetos recogibles
 [RequireComponent(typeof(PlayerHands))]
@@ -13,13 +14,102 @@ public class PlayerItemInteraction : MonoBehaviour
     [SerializeField, Range(0.01f, 0.9f)] private float _aimTolerance = 0.18f;
     [SerializeField] private LayerMask _pickupLayerMask;
 
+    [Header("Interaction UI")]
+    [SerializeField] private GameObject _pickupPromptPanel;
+    [SerializeField] private TMP_Text _pickupPromptText;
+
     private PlayerHands _hands;
+
+    private PickupOutline _highlightedOutline;
     #endregion
 
+    #region Unity Methods
     private void Awake()
     {
         _hands = GetComponent<PlayerHands>();
+
+        // hay que ocultar el mensaje de recogida al iniciar
+        UpdatePickupPromptText(false);
     }
+
+    private void LateUpdate()
+    {
+        PickupOutline nextOutline = null;
+        bool hasPickupTarget = false;
+
+        // se muestra el contorno, siempre y cuando el juego no esté pausado
+        if (Time.timeScale > 0f && _hands != null && TryFindPickupItem(out GameObject item))
+        {
+            // hay un objeto por recoger
+            hasPickupTarget = true;
+
+            nextOutline = item.GetComponent<PickupOutline>();
+            if (nextOutline != null && !nextOutline.isActiveAndEnabled)
+            {
+                nextOutline = null;
+            }
+        }
+
+        SetHighlightedOutline(nextOutline);
+        UpdatePickupPromptText(hasPickupTarget);
+    }
+
+    // Apaga el contorno al desactivarse el componente
+    private void OnDisable()
+    {
+        SetHighlightedOutline(null);
+        UpdatePickupPromptText(false);
+    }
+    #endregion
+
+    #region Hightlighted Methods
+    // Muestra u oculta el contorno del objeto
+    private void SetHighlightedOutline(PickupOutline nextOutline)
+    {
+        // si es el mismo objeto que ya se estaba mirando, no hace falta cambiar nada
+        if (_highlightedOutline == nextOutline)
+            return;
+
+        // primero, se apaga el contorno del objeto anterior!
+        if (_highlightedOutline != null)
+            _highlightedOutline.SetHighlighted(false);
+
+        // luego, se le da la referencia del nuevo objeto que se está mirando
+        // para mostrar su contorno
+        _highlightedOutline = nextOutline;
+
+        if (_highlightedOutline != null)
+        {
+            _highlightedOutline.SetHighlighted(true);
+        }
+    }
+
+    // Muestra u oculta el aviso de recogida
+    private void UpdatePickupPromptText(bool visible)
+    {
+        if (_pickupPromptPanel == null || _pickupPromptText == null) return;
+
+        visible = visible && _hands != null;
+
+        // si ya se está mostrando, se oculta
+        if (visible)
+        {
+            // en función de si hay una mano libre o ambas están ocupadas, se informa en
+            // consecuencia al jugador
+            string message = _hands.HasFreeHand
+            ? "[F] Pick up" : "[F] Pick up\n<size=75%>Drops right-hand item</size>";
+
+            // hay que asegurarse que el mensaje que se va a mostrar coincide
+            if (_pickupPromptText.text != message)
+                _pickupPromptText.text = message;
+        }
+
+        // finalmente, se muestra el texto
+        if (_pickupPromptPanel.activeSelf != visible)
+            _pickupPromptPanel.SetActive(visible);
+
+    }
+    #endregion
 
     #region Hands Methods
     // Intenta recoger un objeto al alcance del jugador
@@ -31,14 +121,19 @@ public class PlayerItemInteraction : MonoBehaviour
             return;
         }
 
-        if (!_hands.HasFreeHand)
+        /*if (!_hands.HasFreeHand)
         {
             Debug.Log("[PlayerItemInteraction] Las dos manos están ocupadas.");
             return;
-        }
+        }*/
+        // AHORA dejamos recoger objetos siempre, y se suelta siempre el de la mano derecha
 
-        if(TryFindPickupItem(out GameObject item) && _hands.TryHold(item))
+        if (TryFindPickupItem(out GameObject item) && _hands.TryHold(item))
         {
+            // se apaga el contorno del objeto y se oculta el texto
+            SetHighlightedOutline(null);
+            UpdatePickupPromptText(false);
+
             Debug.Log("[PlayerItemInteraction] Objeto recogido: " + item.name);
         }
     }
@@ -60,8 +155,8 @@ public class PlayerItemInteraction : MonoBehaviour
         // coger un objeto atravesando la pared)
         Vector3 center = transform.position + Vector3.up * _pickupCenterHeight;
         Collider[] nearby = Physics.OverlapSphere(
-            center, 
-            _pickupRadius, 
+            center,
+            _pickupRadius,
             _pickupLayerMask,
             QueryTriggerInteraction.Ignore
         );
@@ -71,21 +166,21 @@ public class PlayerItemInteraction : MonoBehaviour
         float maxRayDistance = _pickupRadius + Vector3.Distance(_firstPersonCamera.position, center);
         if (Physics.Raycast(
             _firstPersonCamera.position,
-            _firstPersonCamera.forward, 
-            out RaycastHit rayHit, 
+            _firstPersonCamera.forward,
+            out RaycastHit rayHit,
             maxRayDistance,
             Physics.DefaultRaycastLayers,
             QueryTriggerInteraction.Ignore)
             && TryGetNearbyItem(rayHit.collider, nearby, out item))
         {
-            Debug.Log("[PlayerItemInteraction] Hay un objeto al alcance del jugador con RayCast.");
+            //Debug.Log("[PlayerItemInteraction] Hay un objeto al alcance del jugador con RayCast.");
             return true;
         }
 
         // en caso de que el raycast (un rayo finao) no haya seleccionado nada, se realiza
         // un spherecast (un rayo más grueso) por si acaso el objeto no está justo en el centro
         // de la mirada
-        if (Physics.SphereCast (
+        if (Physics.SphereCast(
             _firstPersonCamera.position,
             _aimTolerance,
             _firstPersonCamera.forward,
@@ -95,11 +190,11 @@ public class PlayerItemInteraction : MonoBehaviour
             QueryTriggerInteraction.Ignore)
             && TryGetNearbyItem(sphereHit.collider, nearby, out item))
         {
-            Debug.Log("[PlayerItemInteraction] Hay un objeto al alcance del jugador con SphereCast.");
+            //Debug.Log("[PlayerItemInteraction] Hay un objeto al alcance del jugador con SphereCast.");
             return true;
         }
 
-        Debug.Log("[PlayerItemInteraction] No hay ningún objeto al alcance del jugador.");
+        //Debug.Log("[PlayerItemInteraction] No hay ningún objeto al alcance del jugador.");
         return false;
     }
 
@@ -122,7 +217,7 @@ public class PlayerItemInteraction : MonoBehaviour
             // o si tiene un rigidbody, se coge el objeto del rigidbody
             GameObject candidate = collider.attachedRigidbody != null ?
                 collider.attachedRigidbody.gameObject : collider.gameObject;
-            
+
             // si el objeto es "parte del jugador", se ignora, es decir, si lo lleva en una mano
             if (candidate.transform.IsChildOf(transform))
             {
@@ -134,7 +229,7 @@ public class PlayerItemInteraction : MonoBehaviour
             return true;
         }
         return false;
-    }    
+    }
 
     // Intenta soltar el objeto de la mano izquierda
     public void TryDropLeft()
@@ -162,7 +257,7 @@ public class PlayerItemInteraction : MonoBehaviour
         Vector3 center = transform.position + Vector3.up * _pickupCenterHeight;
 
         // área de recogida de objetos
-        Gizmos.color = Color.yellow;        
+        Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(center, _pickupRadius);
 
         if (_firstPersonCamera == null) return;

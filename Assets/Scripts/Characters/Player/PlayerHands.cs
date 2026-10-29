@@ -54,7 +54,8 @@ public class PlayerHands : MonoBehaviour
         bool useLeftHand = _leftItem == null;
 
         // en caso de que ambas manos estén ocupadas
-        if (!useLeftHand && _rightItem != null) return false;
+        //if (!useLeftHand && _rightItem != null) return false;
+        // AHORA se permite coger otro objeto aunque estén las dos manos ocupadas!
 
         // se elige el punto de agarre
         Transform grip = useLeftHand ? _leftHandGrip : _rightHandGrip;
@@ -74,6 +75,13 @@ public class PlayerHands : MonoBehaviour
         {
             Debug.LogWarning("[PlayerHands] El objeto necesita un Collider: " + item.name, item);
             return false;
+        }
+
+        // si las dos manos están ocupadas, se suelta siempre el objeto de la derecha
+        if (!HasFreeHand)
+        {
+            if (!TryDropRight()) 
+                return false;
         }
 
         // se desactiva la física del objeto ya que se va a mover con la mano
