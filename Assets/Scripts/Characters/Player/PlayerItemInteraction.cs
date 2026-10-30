@@ -1,8 +1,8 @@
 using UnityEngine;
 using TMPro;
-using Unity.VisualScripting;
 
 // Clase que gestiona la interacción del jugador con objetos recogibles
+// o interactuables (de puzzles)
 [RequireComponent(typeof(PlayerHands))]
 public class PlayerItemInteraction : MonoBehaviour
 {
@@ -12,7 +12,10 @@ public class PlayerItemInteraction : MonoBehaviour
     [SerializeField, Min(0.1f)] private float _pickupRadius = 2.5f;
     [SerializeField, Min(0f)] private float _pickupCenterHeight = 1f;
     [SerializeField, Range(0.01f, 0.9f)] private float _aimTolerance = 0.18f;
+
+    [Header("Interaction layers")]
     [SerializeField] private LayerMask _pickupLayerMask;
+    [SerializeField] private LayerMask _interactLayerMask;
 
     [Header("Interaction UI")]
     [SerializeField] private GameObject _pickupPromptPanel;
@@ -35,23 +38,31 @@ public class PlayerItemInteraction : MonoBehaviour
     private void LateUpdate()
     {
         PickupOutline nextOutline = null;
-        bool hasPickupTarget = false;
+        bool hasTarget = false;     // indica si hay que mostrar el panel
+        bool isInteraction = false; // indica qué mensaje debe aparecer en el texto
 
         // se muestra el contorno, siempre y cuando el juego no esté pausado
-        if (Time.timeScale > 0f && _hands != null && TryFindPickupItem(out GameObject item))
+        if (Time.timeScale > 0f && _hands != null
+            && TryFindInteractionItem(out GameObject item, out InteractableItem interactable))
         {
-            // hay un objeto por recoger
-            hasPickupTarget = true;
+            hasTarget = true; // hay un objeto
+            isInteraction = interactable != null;
 
-            nextOutline = item.GetComponent<PickupOutline>();
-            if (nextOutline != null && !nextOutline.isActiveAndEnabled)
+            // el contorno solo se muestra en objetos recogibles
+            if (item != null)
             {
-                nextOutline = null;
+                nextOutline = item.GetComponent<PickupOutline>();
+                if (nextOutline != null && !nextOutline.isActiveAndEnabled)
+                {
+                    nextOutline = null;
+                }
             }
+
+
         }
 
         SetHighlightedOutline(nextOutline);
-        UpdatePickupPromptText(hasPickupTarget);
+        UpdatePickupPromptText(hasTarget, isInteraction);
     }
 
     // Apaga el contorno al desactivarse el componente
@@ -84,8 +95,8 @@ public class PlayerItemInteraction : MonoBehaviour
         }
     }
 
-    // Muestra u oculta el aviso de recogida
-    private void UpdatePickupPromptText(bool visible)
+    // Muestra u oculta el aviso de recogida o interacción
+    private void UpdatePickupPromptText(bool visible, bool isInteraction = false)
     {
         if (_pickupPromptPanel == null || _pickupPromptText == null) return;
 
@@ -94,27 +105,40 @@ public class PlayerItemInteraction : MonoBehaviour
         // si ya se está mostrando, se oculta
         if (visible)
         {
-            // en función de si hay una mano libre o ambas están ocupadas, se informa en
-            // consecuencia al jugador
-            string message = _hands.HasFreeHand
-            ? "[F] Pick up" : "[F] Pick up\n<size=75%>Drops right-hand item</size>";
+            // en función de si es un objeto recogible o interactuable, se cambia el mensaje
+            string message;
+            // interactuable
+            if (isInteraction)
+            {
+                message = "[F] Interact";
+            }
+            // recogible
+            else
+            {
+                message = _hands.HasFreeHand
+                    ? "[F] Pick up" : "[F] Pick up\n<size=75%>Drops right-hand item</size>";
+            }
 
             // hay que asegurarse que el mensaje que se va a mostrar coincide
             if (_pickupPromptText.text != message)
+            {
                 _pickupPromptText.text = message;
+            }
         }
 
-        // finalmente, se muestra el texto
+        // finalmente, se muestra u oculta el texto
         if (_pickupPromptPanel.activeSelf != visible)
             _pickupPromptPanel.SetActive(visible);
 
     }
     #endregion
 
-    #region Hands Methods
-    // Intenta recoger un objeto al alcance del jugador
-    public void TryPickup()
+    #region Interaction Methods
+    // Intenta interactuar con un objeto al alcance del jugador
+    public void TryInteract()
     {
+        if (!isActiveAndEnabled || Time.timeScale <= 0f) return;
+
         if (_hands == null)
         {
             Debug.LogWarning("[PlayerItemInteraction] Falta PlayerHands en este objeto.", this);
@@ -128,7 +152,27 @@ public class PlayerItemInteraction : MonoBehaviour
         }*/
         // AHORA dejamos recoger objetos siempre, y se suelta siempre el de la mano derecha
 
-        if (TryFindPickupItem(out GameObject item) && _hands.TryHold(item))
+        if (!TryFindInteractionItem(out GameObject item, out InteractableItem interactable))
+        {
+            Debug.Log("[PlayerItemInteraction] No se ha encontrado ningún objeto para recoger o interactuar.");
+            return;
+        }
+
+        // si es un objeto interactuable, de puzzle, se solicita su interacción
+        if (interactable != null)
+        {
+            if (interactable.TryInteract())
+            {
+                // se apaga el contorno del objeto y se oculta el texto
+                SetHighlightedOutline(null);
+                UpdatePickupPromptText(false);
+            }
+
+            return;
+        }
+
+        // si es un objeto recogible, se coge con la mano
+        if (item != null && _hands.TryHold(item))
         {
             // se apaga el contorno del objeto y se oculta el texto
             SetHighlightedOutline(null);
@@ -140,7 +184,7 @@ public class PlayerItemInteraction : MonoBehaviour
 
     // Intenta encontrar un objeto al alcance del jugador y si lo hay, lo devuelve
     // (este tiene que estar dentro del área de recogida y el jugador tiene que estar mirando hacia él)
-    private bool TryFindPickupItem(out GameObject item)
+    /*private bool TryFindPickupItem(out GameObject item)
     {
         item = null;
 
@@ -196,13 +240,91 @@ public class PlayerItemInteraction : MonoBehaviour
 
         //Debug.Log("[PlayerItemInteraction] No hay ningún objeto al alcance del jugador.");
         return false;
+    }*/
+
+    // Intenta encontrar un objeto recogible o interactuable (éste tiene que estar 
+    // dentro del área de recogida y el jugador tiene que estar mirando hacia él)
+    private bool TryFindInteractionItem(out GameObject item, out InteractableItem interactable)
+    {
+        item = null;
+        interactable = null;
+
+        if (_firstPersonCamera == null)
+        {
+            Debug.LogWarning("[PlayerItemInteraction] No se ha asignado la cámara en primera persona!");
+            return false;
+        }
+
+        // se buscan los objetos dentro del área de recogida del jugador
+        // (si hay una pared delante del objeto, no se detecta, es decir, no se puede
+        // coger un objeto atravesando la pared)
+        Vector3 center = transform.position + Vector3.up * _pickupCenterHeight;
+        // se buscan los objetos en las 2 capas
+        int interactionLayers = _pickupLayerMask | _interactLayerMask;
+        Collider[] nearby = Physics.OverlapSphere(
+            center,
+            _pickupRadius,
+            interactionLayers,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (nearby.Length == 0)
+        {
+            //Debug.Log("[PlayerItemInteraction] No hay objetos cercanos. Nearby Length = " + nearby.Length);
+            return false;
+        }
+
+        // se realiza un raycast desde la cámara para determinar qué objeto está mirando
+        float maxRayDistance = _pickupRadius + Vector3.Distance(_firstPersonCamera.position, center);
+        // primero el que está justo en el centro de la mirada
+        if (Physics.Raycast(
+            _firstPersonCamera.position,
+            _firstPersonCamera.forward,
+            out RaycastHit rayHit,
+            maxRayDistance,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore)
+            && TryGetNearbyItem(rayHit.collider, nearby, out item, out interactable))
+        {
+            //Debug.Log("[PlayerItemInteraction] Hay un objeto al alcance del jugador con RayCast.");
+            return true;
+        }
+
+        // en caso de que el raycast (un rayo finao) no haya seleccionado nada, se realiza
+        // un spherecast (un rayo más grueso) por si acaso el objeto no está justo en el centro
+        // de la mirada
+        if (Physics.SphereCast(
+            _firstPersonCamera.position,
+            _aimTolerance,
+            _firstPersonCamera.forward,
+            out RaycastHit sphereHit,
+            maxRayDistance,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore)
+            && TryGetNearbyItem(sphereHit.collider, nearby, out item, out interactable))
+        {
+            //Debug.Log("[PlayerItemInteraction] Hay un objeto al alcance del jugador con SphereCast.");
+            return true;
+        }
+
+        //Debug.Log("[PlayerItemInteraction] No hay ningún objeto al alcance del jugador.");
+        return false;
     }
 
     // Intenta encontrar un objeto al alcance del jugador que esté siendo mirado
-    // (para evitar recoger uno que tenga detrás por ejemplo)
-    private bool TryGetNearbyItem(Collider hitCollider, Collider[] nearby, out GameObject item)
+    // (para evitar recoger uno que tenga detrás por ejemplo), y determina si es
+    // recogible o interactuable (puzzle)
+    private bool TryGetNearbyItem(Collider hitCollider, Collider[] nearby,
+                    out GameObject item, out InteractableItem interactable)
     {
         item = null;
+        interactable = null;
+
+        // se ignoran los objetos que el jugador ya lleva consigo
+        if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+        {
+            return false;
+        }
 
         // se comprueba si el objeto al que mira el jugador está dentro del área de recogida
         foreach (Collider collider in nearby)
@@ -213,24 +335,50 @@ public class PlayerItemInteraction : MonoBehaviour
                 continue;
             }
 
-            // se coge el objeto que tiene el collider,
-            // o si tiene un rigidbody, se coge el objeto del rigidbody
-            GameObject candidate = collider.attachedRigidbody != null ?
-                collider.attachedRigidbody.gameObject : collider.gameObject;
-
-            // si el objeto es "parte del jugador", se ignora, es decir, si lo lleva en una mano
-            if (candidate.transform.IsChildOf(transform))
+            // se obtiene la capa del GameObject que contiene el collider
+            int layerBit = 1 << collider.gameObject.layer;
+            // primero se comprueba si pertenece a las capas de objetos interactuables
+            if ((_interactLayerMask.value & layerBit) != 0)
             {
-                Debug.Log("[PlayerItemInteraction] El objeto al alcance del jugador es parte del jugador: " + candidate.name);
-                return false;
+                InteractableItem candidate = collider.GetComponentInParent<InteractableItem>();
+                if (candidate != null)
+                {
+                    // en caso de que no se pueda interactuar con el objeto, o ya lo lleve consigo
+                    if (!candidate.CanInteract || candidate.transform.IsChildOf(transform))
+                    {
+                        return false;
+                    }
+
+                    interactable = candidate;
+                    return true;
+                }
             }
 
-            item = candidate;
-            return true;
+            // después, se comprueba si pertenece a las capas de objetos recogibles
+            if ((_pickupLayerMask.value & layerBit) != 0)
+            {
+                Rigidbody body = collider.attachedRigidbody;
+                if (body != null)
+                {
+                    // si ya lleva el objeto consigo, sale
+                    if (body.transform.IsChildOf(transform))
+                    {
+                        return false;
+                    }
+
+                    item = body.gameObject;
+                    return true;
+                }
+            }
+
+            return false;
         }
+
         return false;
     }
+    #endregion
 
+    #region Drop Methods
     // Intenta soltar el objeto de la mano izquierda
     public void TryDropLeft()
     {
