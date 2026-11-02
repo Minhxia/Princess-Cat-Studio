@@ -166,6 +166,59 @@ public class PlayerHands : MonoBehaviour
     }
     #endregion
 
+    #region Transfer Methods
+    // Transfiere un objeto de una de las manos del jugador a otro punto del escenario 
+    // (por ejemplo, a la mano de la estatua al ofrecerle una ofrenda)
+    public bool TryTransferTo (GameObject item, Transform destination)
+    {
+        if (!isActiveAndEnabled || item == null || destination == null)
+            return false;
+        
+        // si el punto de destino está "dentro" del propio jugador,
+        // o del propio objeto 
+        if (destination.IsChildOf(transform) || destination.IsChildOf(item.transform))
+            return false;
+
+        bool isLeftItem = item == _leftItem;
+        bool isRightItem = item == _rightItem;
+
+        // si no es ninguno de los objetos sostenidos
+        if (!isLeftItem&& !isRightItem)
+            return false;
+
+        Rigidbody body = item.GetComponent<Rigidbody>();
+        if (body == null)
+            return false;
+        
+        // se finaliza el uso y se libera la mano que sostenía el objeto
+        // mano izquierda
+        if (isLeftItem)
+        {
+            EndUseLeft();
+            _leftItem = null;
+        }
+        // mano derecha
+        else
+        {
+            EndUseRight();
+            _rightItem = null;
+        }
+
+        // se transfiere el objeto a su nuevo destino
+        body.isKinematic = true;
+        body.useGravity = false;
+        foreach (Collider collider in item.GetComponentsInChildren<Collider>(true))
+        {
+            collider.enabled = false;
+        }
+        item.GetComponent<PickupOutline>().SetHighlighted(false);
+        item.transform.SetParent(destination, true);
+        item.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        
+        return true;
+    }
+    #endregion
+
     #region Use Methods
     // Inicia el uso del objeto
     private void BeginUse(GameObject heldItem, GameObject otherHandItem, ref GameObject usedItem)

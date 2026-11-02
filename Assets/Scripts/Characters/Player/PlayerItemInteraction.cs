@@ -20,6 +20,7 @@ public class PlayerItemInteraction : MonoBehaviour
     [Header("Interaction UI")]
     [SerializeField] private GameObject _pickupPromptPanel;
     [SerializeField] private TMP_Text _pickupPromptText;
+    [SerializeField] private CluePanelUI _cluePanel;
 
     private PlayerHands _hands;
 
@@ -32,44 +33,55 @@ public class PlayerItemInteraction : MonoBehaviour
         _hands = GetComponent<PlayerHands>();
 
         // hay que ocultar el mensaje de recogida al iniciar
-        UpdatePickupPromptText(false);
+        UpdateInteractionPromptText(false, null);
     }
 
     private void LateUpdate()
     {
-        PickupOutline nextOutline = null;
-        bool hasTarget = false;     // indica si hay que mostrar el panel
-        bool isInteraction = false; // indica qué mensaje debe aparecer en el texto
+        // mientras se está leyendo la placa, se ocultan su contorno y su aviso (examinar)
+        if (_cluePanel != null && _cluePanel.IsOpen)
+        {
+            ClearFeedback();
+            return;
+        }
 
+        PickupOutline nextOutline = null;
+        GameObject pickupable = null;
+        InteractableItem interactable = null;
+
+        bool hasTarget = false;     // indica si hay que mostrar el panel
         // se muestra el contorno, siempre y cuando el juego no esté pausado
         if (Time.timeScale > 0f && _hands != null
-            && TryFindInteractionItem(out GameObject item, out InteractableItem interactable))
+            && TryFindInteractionItem(out pickupable, out interactable))
         {
             hasTarget = true; // hay un objeto
-            isInteraction = interactable != null;
 
-            // el contorno solo se muestra en objetos recogibles
-            if (item != null)
+            // si es un elemento de un puzzle, se utiliza su contorno asignado
+            if (interactable != null)
             {
-                nextOutline = item.GetComponent<PickupOutline>();
-                if (nextOutline != null && !nextOutline.isActiveAndEnabled)
-                {
-                    nextOutline = null;
-                }
+                nextOutline = interactable.InteractionOutline;
+            }
+            // si es recogible, utiliza el contorno del propio objeto
+            else if (pickupable != null)
+            {
+                nextOutline = pickupable.GetComponent<PickupOutline>();
             }
 
-
+            if (nextOutline != null && !nextOutline.isActiveAndEnabled)
+            {
+                nextOutline = null;
+            }
         }
 
         SetHighlightedOutline(nextOutline);
-        UpdatePickupPromptText(hasTarget, isInteraction);
+        UpdateInteractionPromptText(hasTarget, interactable);
     }
 
     // Apaga el contorno al desactivarse el componente
     private void OnDisable()
     {
-        SetHighlightedOutline(null);
-        UpdatePickupPromptText(false);
+        ClearFeedback();
+        if (_cluePanel != null) _cluePanel.Close();
     }
     #endregion
 
@@ -96,7 +108,7 @@ public class PlayerItemInteraction : MonoBehaviour
     }
 
     // Muestra u oculta el aviso de recogida o interacción
-    private void UpdatePickupPromptText(bool visible, bool isInteraction = false)
+    private void UpdateInteractionPromptText(bool visible, InteractableItem interactable)
     {
         if (_pickupPromptPanel == null || _pickupPromptText == null) return;
 
@@ -108,15 +120,15 @@ public class PlayerItemInteraction : MonoBehaviour
             // en función de si es un objeto recogible o interactuable, se cambia el mensaje
             string message;
             // interactuable
-            if (isInteraction)
+            if (interactable != null)
             {
-                message = "[F] Interact";
+                // en este caso, puede ser "examinar" o "interactuar"
+                message = interactable.InteractionPrompt;
             }
-            // recogible
             else
             {
-                message = _hands.HasFreeHand
-                    ? "[F] Pick up" : "[F] Pick up\n<size=75%>Drops right-hand item</size>";
+                message = _hands.HasFreeHand ? "[F] Pick up"
+                    : "[F] Pick up\n<size=75%>Drops right-hand item</size>";
             }
 
             // hay que asegurarse que el mensaje que se va a mostrar coincide
@@ -131,6 +143,13 @@ public class PlayerItemInteraction : MonoBehaviour
             _pickupPromptPanel.SetActive(visible);
 
     }
+
+    // Oculta el contorno y el aviso de recogida/interacción
+    private void ClearFeedback()
+    {
+        SetHighlightedOutline(null);
+        UpdateInteractionPromptText(false, null);
+    }
     #endregion
 
     #region Interaction Methods
@@ -138,6 +157,14 @@ public class PlayerItemInteraction : MonoBehaviour
     public void TryInteract()
     {
         if (!isActiveAndEnabled || Time.timeScale <= 0f) return;
+
+        // si se está leyendo una pista, F cierra el panel
+        if (_cluePanel != null && _cluePanel.IsOpen)
+        {
+            _cluePanel.Close();
+            ClearFeedback();
+            return;
+        }
 
         if (_hands == null)
         {
@@ -164,8 +191,7 @@ public class PlayerItemInteraction : MonoBehaviour
             if (interactable.TryInteract())
             {
                 // se apaga el contorno del objeto y se oculta el texto
-                SetHighlightedOutline(null);
-                UpdatePickupPromptText(false);
+                ClearFeedback();
             }
 
             return;
@@ -175,8 +201,7 @@ public class PlayerItemInteraction : MonoBehaviour
         if (item != null && _hands.TryHold(item))
         {
             // se apaga el contorno del objeto y se oculta el texto
-            SetHighlightedOutline(null);
-            UpdatePickupPromptText(false);
+            ClearFeedback();
 
             Debug.Log("[PlayerItemInteraction] Objeto recogido: " + item.name);
         }

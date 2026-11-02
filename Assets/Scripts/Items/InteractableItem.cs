@@ -11,8 +11,16 @@ public class InteractableItem : MonoBehaviour
     [SerializeField] private bool _interactionEnabled = true;
     [SerializeField] private UnityEvent _onInteract = new UnityEvent();
 
-    public bool CanInteract => isActiveAndEnabled && _interactionEnabled;
+    [Header("Visual feedback")]
+    [SerializeField] private PickupOutline _interactionOutline;
+    [SerializeField] private string _interactionPrompt = "[F] Interact";
 
+    public bool CanInteract => isActiveAndEnabled && _interactionEnabled;
+    public PickupOutline InteractionOutline => _interactionOutline;
+
+    public string InteractionPrompt => string.IsNullOrWhiteSpace(_interactionPrompt)
+        ? "[F] Interact" : _interactionPrompt;
+        
     // Solicita la acción configurada (la del puzzle)
     public bool TryInteract()
     {
