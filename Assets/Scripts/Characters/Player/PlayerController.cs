@@ -110,10 +110,10 @@ public class PlayerController : MonoBehaviour
             _characterMovement.RequestJump();
         }*/
 
-        // coger objetos
+        // coger objetos o interactuar con ellos
         if (_pickupKey != Key.None && keyboard[_pickupKey].wasPressedThisFrame)
         {
-            _itemInteraction.TryPickup();
+            _itemInteraction.TryInteract();
         }
         // soltar objetos
         if (_dropLeftKey != Key.None && keyboard[_dropLeftKey].wasPressedThisFrame)
