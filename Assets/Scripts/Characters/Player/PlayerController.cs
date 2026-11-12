@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour
     private bool _readyForHandInput;
     #endregion
 
-    #region Unity Methods
+    #region Unity
     private void Awake()
     {
         _characterMovement = GetComponent<CharacterMovement3D>();
@@ -98,17 +98,12 @@ public class PlayerController : MonoBehaviour
 
         // correr
         // se actualiza la estamina del jugador y se indica si está corriendo
-        bool canRun = moveDirection.sqrMagnitude > 0f && !_crouchToggled;
+        // Layla no permite que el jugador corra
+        bool canRun = moveDirection.sqrMagnitude > 0f && !_crouchToggled
+                        && !_hands.CompanionBlocksRunning; 
         bool isRunning = _stamina.UpdateStamina(IsPressed(keyboard, _runKey), canRun);
         _characterMovement.SetRunning(isRunning);
         //Debug.Log("[PlayerController] Está corriendo: " + isRunning + ", puede correr? " + canRun + ", estamina fill: " + _stamina.FillAmount.ToString("F2"));
-
-        /*
-        // salto
-        if (_jumpKey != Key.None && keyboard[_jumpKey].wasPressedThisFrame)
-        {
-            _characterMovement.RequestJump();
-        }*/
 
         // coger objetos o interactuar con ellos
         if (_pickupKey != Key.None && keyboard[_pickupKey].wasPressedThisFrame)
@@ -140,7 +135,7 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Input Methods
+    #region Input
     // Método auxiliar para comprobar si una tecla está presionada
     // (no se comprueba nada si no se ha pulsado nada)
     private bool IsPressed(Keyboard keyboard, Key key)

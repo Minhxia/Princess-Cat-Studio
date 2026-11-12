@@ -27,7 +27,7 @@ public class PlayerItemInteraction : MonoBehaviour
     private PickupOutline _highlightedOutline;
     #endregion
 
-    #region Unity Methods
+    #region Unity
     private void Awake()
     {
         _hands = GetComponent<PlayerHands>();
@@ -85,7 +85,7 @@ public class PlayerItemInteraction : MonoBehaviour
     }
     #endregion
 
-    #region Hightlighted Methods
+    #region Hightlighted
     // Muestra u oculta el contorno del objeto
     private void SetHighlightedOutline(PickupOutline nextOutline)
     {
@@ -119,16 +119,25 @@ public class PlayerItemInteraction : MonoBehaviour
         {
             // en función de si es un objeto recogible o interactuable, se cambia el mensaje
             string message;
-            // interactuable
+            // INTERACTUABLE
             if (interactable != null)
             {
-                // en este caso, puede ser "examinar" o "interactuar"
-                message = interactable.InteractionPrompt;
+                // se muestra el mensaje correspondiente al jugador, del niño o del objeto
+                ChildCompanion child = interactable.GetComponent<ChildCompanion>();
+                message = child != null ? child.HandPrompt : interactable.InteractionPrompt;
+            }
+            // RECOGIBLE
+            else if (_hands.HasFreeHand)
+            {
+                message = "[F] Pick up";
+            }
+            else if (_hands.IsHoldingChild)
+            {
+                message = "Free a hand first";
             }
             else
             {
-                message = _hands.HasFreeHand ? "[F] Pick up"
-                    : "[F] Pick up\n<size=75%>Drops right-hand item</size>";
+                message = "[F] Pick up\n<size=75%>Drops right-hand item</size>";
             }
 
             // hay que asegurarse que el mensaje que se va a mostrar coincide
@@ -152,7 +161,7 @@ public class PlayerItemInteraction : MonoBehaviour
     }
     #endregion
 
-    #region Interaction Methods
+    #region Interaction
     // Intenta interactuar con un objeto al alcance del jugador
     public void TryInteract()
     {
@@ -403,7 +412,7 @@ public class PlayerItemInteraction : MonoBehaviour
     }
     #endregion
 
-    #region Drop Methods
+    #region Drop
     // Intenta soltar el objeto de la mano izquierda
     public void TryDropLeft()
     {
@@ -423,7 +432,7 @@ public class PlayerItemInteraction : MonoBehaviour
     }
     #endregion
 
-    #region Debug Methods
+    #region Debug
     // Debug visual de la zona de recogida + mirada del jugador
     private void OnDrawGizmosSelected()
     {
