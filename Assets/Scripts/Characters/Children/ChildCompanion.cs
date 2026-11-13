@@ -66,10 +66,18 @@ public class ChildCompanion : MonoBehaviour
             if (DistanceToPlayer > _takeHandDistance)
                 return "Move closer to " + gameObject.name;
 
-            if (!_playerHands.HasFreeHand)
+            // si ya lleva un niño en cada mano (dos a la vez), tiene que soltar primero
+            // a uno de ellos
+            if (_playerHands.BothHandsHaveChildren)
                 return "Free a hand first";
 
-            return "[F] Take hand";
+            if (_playerHands.HasFreeHand)
+                return "[F] Take hand";
+
+            // en caso de llevar un niño de una mano y objeto recogible en la otra,
+            // tirará automáticamente el objeto si le da la mano a otro niño
+            string hand = _playerHands.PickupUsesLeftHand ? "left" : "right";
+            return $"[F] Take hand\n<size=75%>Drops {hand}-hand item</size>";
         }
     }
     #endregion
@@ -155,7 +163,8 @@ public class ChildCompanion : MonoBehaviour
     // Coge la mano del niño 
     public void TakeHand()
     {
-        // el niño no le puede dar la mano al jugador
+        // el niño no le puede dar la mano al jugador si no tiene una mano libre
+        // o está muy lejos
         if (!CanOfferHand || DistanceToPlayer > _takeHandDistance)
         {
             Debug.Log("[ChildCompanion] El niño no le puede dar la mano al jugador.");

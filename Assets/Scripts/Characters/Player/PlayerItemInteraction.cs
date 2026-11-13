@@ -127,17 +127,22 @@ public class PlayerItemInteraction : MonoBehaviour
                 message = child != null ? child.HandPrompt : interactable.InteractionPrompt;
             }
             // RECOGIBLE
+            // no se puede recoger un objeto si el jugador lleva un niño en cada mano
+            // (NO se sueltan automáticamente)
+            else if (_hands.BothHandsHaveChildren)
+            {
+                message = "Free a hand first";
+            }
             else if (_hands.HasFreeHand)
             {
                 message = "[F] Pick up";
             }
-            else if (_hands.IsHoldingChild)
-            {
-                message = "Free a hand first";
-            }
+            // en caso de llevar de la mano SOLO a un niño, se tira automáticamente el objeto
+            // recogible de la otra mano
             else
             {
-                message = "[F] Pick up\n<size=75%>Drops right-hand item</size>";
+                string hand = _hands.PickupUsesLeftHand ? "left" : "right";
+                message = $"[F] Pick up\n<size=75%>Drops {hand}-hand item</size>";
             }
 
             // hay que asegurarse que el mensaje que se va a mostrar coincide

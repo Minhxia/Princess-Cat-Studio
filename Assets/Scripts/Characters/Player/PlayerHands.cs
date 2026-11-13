@@ -49,7 +49,7 @@ public class PlayerHands : MonoBehaviour
         }
     }
     // Layla no permite al jugador correr
-    public bool CompanionBlocksRunning => 
+    public bool CompanionBlocksRunning =>
         (LeftHandHasChild && _leftChild.BlocksRunning) ||
         (RightHandHasChild && _rightChild.BlocksRunning);
 
@@ -57,6 +57,8 @@ public class PlayerHands : MonoBehaviour
     private bool IsLeftHandFree => _leftItem == null && !LeftHandHasChild;
     private bool IsRightHandFree => _rightItem == null && !RightHandHasChild;
     public bool HasFreeHand => IsLeftHandFree || IsRightHandFree;
+    public bool BothHandsHaveChildren => LeftHandHasChild && RightHandHasChild;
+    public bool PickupUsesLeftHand => IsLeftHandFree || RightHandHasChild;
     #endregion
 
     #region Unity
@@ -92,13 +94,13 @@ public class PlayerHands : MonoBehaviour
         // si no se recibe ningún objeto o ese objeto ya está en una de las manos
         if (item == null || item == _leftItem || item == _rightItem) return false;
 
-        // ya tiene las manos ocupadas
-        if (IsHoldingChild && !HasFreeHand)
+        // ya tiene las manos ocupadas por dos niños (los niños NO se sueltan automáticamente)
+        if (BothHandsHaveChildren)
             return false;
 
         // la mano izquierda tiene prioridad, siempre que esté libre, se usará
         // (aunque la derecha también esté libre)
-        bool useLeftHand = IsLeftHandFree;
+        bool useLeftHand = PickupUsesLeftHand;
 
         // en caso de que ambas manos estén ocupadas
         //if (!useLeftHand && _rightItem != null) return false;
@@ -124,10 +126,13 @@ public class PlayerHands : MonoBehaviour
             return false;
         }
 
-        // si las dos manos están ocupadas, se suelta siempre el objeto de la derecha
+        // si las dos manos están ocupadas, NORMALMENTE se suelta el objeto de la derecha,
+        // a no ser que esta mano lleve a un niño
         if (!HasFreeHand)
         {
-            if (!TryDropRight())
+            bool droppedItem = useLeftHand ? TryDrop(ref _leftItem) : TryDrop(ref _rightItem);
+
+            if (!droppedItem)
                 return false;
         }
 
@@ -368,18 +373,36 @@ public class PlayerHands : MonoBehaviour
         return child != null && _leftChild == child;
     }
 
-    // Comprueba si hay una mano libre para coger de la mano al niño
+    // Comprueba si hay una mano libre para coger de la mano al niño, si está sujetando un objeto
+    // en una mano y a un niño en la otra, da la opción de tirar el objeto para coger la mano del
+    // nuevo niño
     public bool TryReserveChildHand(ChildCompanion child)
     {
-        // se comprueba si ya lleva al niño dado de la mano, si es así sale
-        if (!isActiveAndEnabled || child == null || IsAccompanying(child) || !HasFreeHand)
+        // se comprueba si ya lleva al niño dado de la mano o lleva a un niño de cada mano (dos a la vez)
+        if (!isActiveAndEnabled || child == null || IsAccompanying(child) || BothHandsHaveChildren)
             return false;
 
         // se comprueban las manos
-        if (IsLeftHandFree)
+        bool useLeftHand = PickupUsesLeftHand;
+
+        // si no tiene una mano libre, comprueba si en alguna lleva un objeto recogible que
+        // pueda soltar
+        if (!HasFreeHand)
+        {
+            bool droppedItem = useLeftHand ? TryDrop(ref _leftItem) : TryDrop(ref _rightItem);
+
+            if (!droppedItem)
+                return false;
+        }
+
+        if (useLeftHand) {
             _leftChild = child;
-        else
+            EndUseLeft();
+        }
+        else {
             _rightChild = child;
+            EndUseRight();
+        }
 
         return true;
     }
