@@ -2,7 +2,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 
-[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(CharacterController), typeof(PlayerHands))]
 
 // Clase que gestiona el movimiento de un personaje en 3D,
 // incluyendo caminar, correr, agacharse y saltar
@@ -22,6 +22,7 @@ public class CharacterMovement3D : MonoBehaviour
     [SerializeField] private float _crouchHeight = 1f;
 
     private CharacterController _characterController;
+    private PlayerHands _hands;
     private Vector3 _moveDirection;
     private Vector3 _standingCenter;
 
@@ -35,11 +36,13 @@ public class CharacterMovement3D : MonoBehaviour
     #endregion
 
     public bool IsCrouching => _isCrouching; // para poder leerla desde PlayerFootSteps
+    public bool HasMovementInput => _moveDirection.sqrMagnitude > 0f; // para dárselo a ChildCompanion
 
-    #region Unity Methods
+    #region Unity
     private void Awake()
     {
         _characterController = GetComponent<CharacterController>();
+        _hands = GetComponent<PlayerHands>();
 
         _standingHeight = _characterController.height;
         _standingCenter = _characterController.center;
@@ -66,7 +69,16 @@ public class CharacterMovement3D : MonoBehaviour
 
         // se determina la velocidad de movimiento del personaje
         float speed = _isCrouching ? _crouchSpeed // si está agachado, se usa la velocidad de agachado
-                        : (_wantsToRun ? _runSpeed : _walkSpeed); // si no está agachado, se usa la velocidad de correr o caminar según corresponda
+            : (_wantsToRun ? _runSpeed : _walkSpeed); // si no está agachado, se usa la velocidad de correr o caminar según corresponda
+        // AHORA los niños influyen también, como Layla
+        if (_hands != null && (_isCrouching || !_wantsToRun))
+        {
+            float multiplier = _hands.CompanionWalkSpeedMultiplier;
+            if (multiplier < 1f)
+            {
+                speed = Mathf.Min(speed, _walkSpeed * multiplier);
+            }
+        }        
         // se calcula la velocidad final, que combina la velocidad de movimiento 
         // horizontal con la vertical
         Vector3 velocity = _moveDirection * speed + Vector3.up * _verticalVelocity;
@@ -76,7 +88,7 @@ public class CharacterMovement3D : MonoBehaviour
     }
     #endregion
 
-    #region Crouch Methods
+    #region Crouch
     // Actualiza el estado de agachado del personaje    
     private void UpdateCrouch()
     {
@@ -155,7 +167,7 @@ public class CharacterMovement3D : MonoBehaviour
     }
     #endregion
 
-    #region Jump Methods
+    #region Jump
     // Actualiza la velocidad vertical del personaje (para el salto),
     // no lo mueve como tal
     private void UpdateVerticalVelocity()
@@ -187,7 +199,7 @@ public class CharacterMovement3D : MonoBehaviour
     }
     #endregion
 
-    #region Other Public Methods
+    #region Others
     // Establece la dirección de movimiento del personaje
     public void SetMoveDirection(Vector3 direction)
     {
