@@ -67,7 +67,7 @@ public class StatueTradePuzzle : MonoBehaviour
     public string Clue => _selectedClue;
     public ItemDefinition RequiredItem => _requiredItem;
 
-    #region Unity Methods
+    #region Unity
     // Realiza la preparación inicial del puzzle
     private void Awake()
     {
@@ -129,7 +129,7 @@ public class StatueTradePuzzle : MonoBehaviour
     }
     #endregion
 
-    #region Interaction Methods
+    #region Interaction
     // Notifica que el jugador ha examinado la placa y leído la pista (solo realiza el cambio
     // la primera vez)
     public void NotifyClueExamined()
@@ -231,7 +231,7 @@ public class StatueTradePuzzle : MonoBehaviour
 
     #endregion
 
-    #region Configuration Methods
+    #region Configuration
     // Comprueba que todos los datos necesarios para el puzzle son correctos
     private bool ValidateConfiguration()
     {
