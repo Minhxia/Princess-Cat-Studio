@@ -70,6 +70,11 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     [Header("Sighting")]
     [SerializeField] private GuardSightingEvent _onPlayerSpotted = new GuardSightingEvent();
 
+    [Header("Animation")]
+    [SerializeField] private Animator _animator;
+
+    private State _inspectionState;     // para las animaciones
+
     // Referencias
     private MuseumGuardPatrolRoute _patrol;     // guarda el recorrido
     private MuseumGuardNavigation _navigation;  // desplaza al guardia hasta el siguiente waypoint
@@ -120,6 +125,9 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
             // se realiza el cambio de estado
             signal.Fire();
         }
+
+        // se actualizan las animaciones
+        UpdateAnimations();
     }
     #endregion
 
@@ -188,6 +196,8 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         State checkRoom = CreateMovementState(movement, "ComprobarSala", inspectRoomAction.Begin, inspectRoomAction.Tick);
         State advanceRoom = CreateMovementState(movement, "AvanzarSala", advanceRoomAction.Begin, advanceRoomAction.Tick);
         State goHomeRoom = CreateMovementState(movement, "RetrocederSalaInicial", returnToStartAction.Begin, returnToStartAction.Tick);
+
+        _inspectionState = checkRoom;   // para las animaciones
 
         // PERCEPCIONES FSM NIVEL 2:
         ConditionPerception inspectionPoint = new ConditionPerception(null, CheckPatrolPoint, null);
@@ -287,7 +297,7 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     private void BeginAlert()
     {
         Debug.Log($"[Guardia] Jugador detectado en sala {CurrentRoomID}", this);
-        
+
         // se interrumpe la acción
         SuspendMovement();
         _sendAlert.Begin();
@@ -334,6 +344,21 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     private void RestFinished()
     {
         _pendingRestSignal = _leaveRest;
+    }
+
+    // Actualiza las animaciones del guardia
+    private void UpdateAnimations()
+    {
+        if (_animator == null)
+            return;
+
+        // está andando?
+        bool walking = !_resumeMovement && _navigation != null && _navigation.IsWalking;
+        // está inspeccionando?
+        bool inspecting = !_resumeMovement && _inspectionState != null && _activeMovementState == _inspectionState;
+
+        _animator.SetBool("Andar", walking);
+        _animator.SetBool("ComprobarSala", inspecting);
     }
 
     // Para debug (se dibuja la "visión" del guardia)
