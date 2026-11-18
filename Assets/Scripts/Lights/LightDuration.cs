@@ -38,7 +38,7 @@ public class LightDuration : MonoBehaviour
 
         // se calculan los segundos restantes
         _remainingSeconds = Mathf.Max(0f, _remainingSeconds - Time.deltaTime);
-        Debug.Log("[LightDuration] Segundos restantes: " + _remainingSeconds);
+        //Debug.Log("[LightDuration] Segundos restantes: " + _remainingSeconds);
 
         // en caso de que se agoten, se apaga
         if (!HasDurationRemaining)
