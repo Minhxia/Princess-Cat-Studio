@@ -19,7 +19,7 @@ public class ReturnToStartAction
     // Inicia el desplazamiento del guardia
     public void Begin()
     {
-        _navigation.BeginTravel();
+        _navigation.BeginTravel(_route.CurrentTarget);
     }
 
     public Status Tick()
@@ -38,7 +38,7 @@ public class ReturnToStartAction
         if (_route.HasPendingStep)
         {
             // y si es así, comienza a desplazarse de nuevo
-            _navigation.BeginTravel();
+            _navigation.BeginTravel(_route.CurrentTarget);
             return Status.Running;
         }
 

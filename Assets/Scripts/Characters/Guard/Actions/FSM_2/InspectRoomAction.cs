@@ -7,7 +7,8 @@ public class InspectRoomAction
 {
     private readonly MuseumGuardPatrolRoute _route;
     private readonly MuseumGuardInspection _inspection;
-    private float _elapsed; // tiempo transcurrido desde que empieza la inspección
+    private float _duration;    // duración de la inspección
+    private float _elapsed;     // tiempo transcurrido desde que empieza la inspección
 
     public InspectRoomAction(MuseumGuardPatrolRoute route, MuseumGuardInspection inspection)
     {
@@ -19,15 +20,20 @@ public class InspectRoomAction
     public void Begin()
     {
         _elapsed = 0f;
+        _duration = _route.CurrentWaitSeconds;
     }
 
     public Status Tick()
     {
         // se acumula el tiempo
         _elapsed += Time.deltaTime;
+        
         // se calcula el progreso para ir aplicando el giro de la inspección
         // en función de ese tiempo
-        float progress = Mathf.Clamp01(_elapsed / _route.CurrentWaitSeconds);
+        float progress = 1f;
+        if (_duration > 0f)
+            progress = Mathf.Clamp01(_elapsed / _duration);
+        
         _inspection.SetProgress(progress);
 
         // se comprueba si ha terminado la inspección

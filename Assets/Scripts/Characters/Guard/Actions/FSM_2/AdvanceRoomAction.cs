@@ -20,7 +20,7 @@ public class AdvanceRoomAction
     public void Begin()
     {
         if (HasDoorToCross)
-            _navigation.BeginTravel();
+            _navigation.BeginTravel(_route.CurrentTarget);
     }
 
     // Avanza por la ruta y comprueba si ha llegado
@@ -36,7 +36,7 @@ public class AdvanceRoomAction
             // si ha llegado, se completa el paso y se comprueba de nuevo si hay más
             _route.CompleteStep();
             if (HasDoorToCross)
-                _navigation.BeginTravel();
+                _navigation.BeginTravel(_route.CurrentTarget);
         }
 
         // si no, continua avanzando

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Door = MuseumGuardPatrolRunner.Door;
@@ -8,7 +9,7 @@ using Room = MuseumGuardPatrolRunner.Room;
 public class MuseumGuardPatrolRoute
 {
     #region Variables
-    public const int HomeRoomID = 12;   // sala de seguridad y tienda de regalos
+    public const int HomeRoomID = 12;   // tienda de regalos
 
     private enum StepKind { PatrolPoint, Door, Backtrack, Rest }
 
@@ -18,36 +19,70 @@ public class MuseumGuardPatrolRoute
         public readonly Transform Target;   // posición donde está
         public readonly int RoomOnArrival;  // id de la sala
         public readonly float WaitSeconds;  // tiempo de la inspección
+        public readonly float SearchWaitSeconds; // tiempo de parada extra cuado "pierde" la tarjeta
 
-        public Step(StepKind kind, Transform target, int roomOnArrival, float waitSeconds = 0f)
+        public Step(StepKind kind, Transform target, int roomOnArrival, float waitSeconds = 0f,
+                        float searchWaitSeconds = 0f)
         {
             Kind = kind;
             Target = target;
             RoomOnArrival = roomOnArrival;
             WaitSeconds = waitSeconds;
+            SearchWaitSeconds = searchWaitSeconds;
         }
     };
 
     private readonly List<Step> _steps = new List<Step>();  // lista de pasos (ruta)
     private int _stepIndex;         // id del paso
     private int _firstReturnStep;   // id del primer paso de la vuelta a la sala inicial
+    private readonly Func<bool> _cardMissing;        // indica si ha perdido la tarjeta
     #endregion
 
     #region Getters
     public bool IsReady { get; }
+
+    // devuelve el id de la sala inicial (la sala 12 -> tienda de regalos)
     public int CurrentRoomID { get; private set; } = HomeRoomID;
+
+    // indica si le queda algún paso por dar
     public bool HasPendingStep => _stepIndex < _steps.Count;
+
+    // indica si se encuentra en un punto de tipo Patrulla
     public bool AtPatrolPoint => HasPendingStep && CurrentStep.Kind == StepKind.PatrolPoint;
+
+    // indica si está volviendo de la patrulla
     public bool AtFinalReturn => _stepIndex >= _firstReturnStep;
+
     public Transform CurrentTarget => CurrentStep.Target;
-    public float CurrentWaitSeconds => CurrentStep.WaitSeconds;
+    public Transform RestTarget
+    {
+        get
+        {
+            if (!IsReady)
+                return null;
+            // ruta inversa al volver a descansar
+            return _steps[_steps.Count - 1].Target;
+        }
+    }
+
+    // tiempo de inspección/parada en cada punto
+    public float CurrentWaitSeconds
+    {
+        get
+        {
+            if (_cardMissing != null && _cardMissing())
+                return Mathf.Max(CurrentStep.WaitSeconds, CurrentStep.SearchWaitSeconds);
+            return CurrentStep.WaitSeconds;
+        }
+    }
 
     private Step CurrentStep => _steps[_stepIndex];
     #endregion
 
     #region Methods
-    public MuseumGuardPatrolRoute(Room[] rooms, Transform restPoint)
+    public MuseumGuardPatrolRoute(Room[] rooms, Transform restPoint, Func<bool> cardMissing = null)
     {
+        _cardMissing = cardMissing;
         IsReady = BuildPatrol(rooms, restPoint);
     }
 
@@ -194,7 +229,8 @@ public class MuseumGuardPatrolRoute
                 return false;
             }
             // finalmente, se añade el waypoint
-            _steps.Add(new Step(StepKind.PatrolPoint, point.target, room.id, point.waitSeconds));
+            _steps.Add(new Step(StepKind.PatrolPoint, point.target, room.id,
+                                    point.waitSeconds, point.searchWaitSeconds));
         }
         // y por fin todo fue bien :')
         return true;

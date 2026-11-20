@@ -18,8 +18,9 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     [Serializable]
     public struct PatrolPoint
     {
-        public Transform target;            // posición
-        [Min(0f)] public float waitSeconds; // tiempo que dura la inspección con la linterna
+        public Transform target;                  // posición
+        [Min(0f)] public float waitSeconds;       // tiempo que dura la inspección con la linterna
+        [Min(0f)] public float searchWaitSeconds; // parada extra cuando le roban la tarjeta
     }
 
     // Conexión con una sala hija
@@ -30,8 +31,8 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         [Min(-1)] public int afterPoint = -1;   // indica después de qué waypoint se cruza de una sala a otra
 
         // puntos a cada lado de la puerta
-        public Transform parentSide; // por ejemplo: recepción es la sala padre
-        public Transform childSide;  // tienda regalos es la sala hija
+        public Transform parentSide; // por ejemplo: tienda regalos es la sala padre (sala 12)
+        public Transform childSide;  // recepción es la sala hija
     }
 
     // Sala con sus datos
@@ -70,10 +71,17 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     [Header("Sighting")]
     [SerializeField] private GuardSightingEvent _onPlayerSpotted = new GuardSightingEvent();
 
+    [Header("Coffee break")]
+    [SerializeField] private GuardCoffee _coffee;
+
+    [Header("Security room")]
+    [SerializeField] private GuardRestAccess _restAccess;
+    [SerializeField] private int _securityRoomID;
+
     [Header("Animation")]
     [SerializeField] private Animator _animator;
-
-    private State _inspectionState;     // para las animaciones
+    [SerializeField] private string _walkingParameter = "Andar";
+    [SerializeField] private string _inspectingParameter = "ComprobarSala";
 
     // Referencias
     private MuseumGuardPatrolRoute _patrol;     // guarda el recorrido
@@ -82,8 +90,13 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     private SendAlertAction _sendAlert;         // acción que envía el aviso al monstruo
 
     // FSM
+    private FSM _rest;                  // FSM Nivel 3: descanso dentro de Pausa
     private FSM _movement;              // FSM Nivel 2: Movimiento
-    private State _activeMovementState; // estado activo dentro de la FSM Nivel 2
+    private State _activeMovementState; // estado activo dentro de la FSM Nivel 2 (reanudación tras el aviso)
+    private State _pauseState;          // estado en FSM Nivel 2 que ejecuta la FSM Nivel 3 (reanudación tras el aviso)
+    private State _activeRestState;     // estado activo dentro de la FSM Nivel 3 (reanudación tras el aviso)
+    private State _restEntryState;      // por defecto IrCafetera (reanudación tras el aviso)
+    private State _inspectionState;     // para la elección de las animaciones
     private PushPerception _enterRest;  // señal para pasar al estado Pausa desde RetrocederSalaInicial
     private PushPerception _leaveRest;  // señal para pasar al estado Andar desde Pausa
     private PushPerception _pendingRestSignal; // señal de las anteriores que queda por lanzar
@@ -96,11 +109,17 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     {
         get
         {
+            // sala 13 -> garita de seguridad (sala especial)
+            if (_restAccess != null && _restAccess.IsInsideRoom)
+                return _securityRoomID;
+
+            // sala 12 -> tienda de regalos (sala raíz)
             if (_patrol == null)
             {
                 return MuseumGuardPatrolRoute.HomeRoomID;   // sala inicial
             }
 
+            // el resto de salas
             return _patrol.CurrentRoomID;
         }
     }
@@ -132,12 +151,12 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     #endregion
 
     #region FSMs
-    // Crea la máquina de estados de dos niveles
+    // Crea la máquina de estados de tres niveles
     protected override BehaviourGraph CreateGraph()
     {
         NavMeshAgent agent = GetComponent<NavMeshAgent>();
         // se crea la ruta
-        _patrol = new MuseumGuardPatrolRoute(_rooms, _restPoint);
+        _patrol = new MuseumGuardPatrolRoute(_rooms, _restPoint, IsCardMissing);
         // su navegación
         _navigation = new MuseumGuardNavigation(agent, _patrol, _navMeshSampleRadius, _pathRetrySeconds);
         // su "visión" (es decir, para saber si ve al jugador)
@@ -146,7 +165,7 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         // y la alerta al ver al jugador (el evento)
         _sendAlert = new SendAlertAction(_vision, _onPlayerSpotted);
 
-        // creación de la FSM con dos niveles
+        // creación de la FSM Nivel 1 y el segundo nivel
         _movement = CreateMovementFSM(agent);  // FSM Nivel 2
         FSM guard = new FSM();                 // FSM Nivel 1
 
@@ -177,20 +196,19 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         // se crea la inspección (que el guardia mire de un lado a otro),
         MuseumGuardInspection inspection = new MuseumGuardInspection(agent, _inspectionpAngle);
 
+        // creación de la FSM Nivel 2 y el tercer nivel
+        _rest = CreateRestFSM();    // FSM Nivel 3
+        FSM movement = new FSM();   // FSM Nivel 2
+
         // ACCIONES FSM NIVEL 2:
-        RestAction restAction = new RestAction(_patrol, _navigation, _restSeconds, _restOnStart,
-                                                    RestFinished);
         WalkAction walkAction = new WalkAction(_patrol, _navigation);
         StopAction stopAction = new StopAction(_patrol, _navigation, inspection);
         InspectRoomAction inspectRoomAction = new InspectRoomAction(_patrol, inspection);
         AdvanceRoomAction advanceRoomAction = new AdvanceRoomAction(_patrol, _navigation);
         ReturnToStartAction returnToStartAction = new ReturnToStartAction(_patrol, _navigation, RestPointReached);
 
-        // creación de la FSM de Nivel 2
-        FSM movement = new FSM();
-
         // ESTADOS FSM NIVEL 2:
-        State rest = CreateMovementState(movement, "Pausa", restAction.Begin, restAction.Tick);
+        _pauseState = movement.CreateState("Pausa", new SubsystemAction(_rest));
         State walk = CreateMovementState(movement, "Andar", walkAction.Begin, walkAction.Tick);
         State stop = CreateMovementState(movement, "Parar", stopAction.Begin, stopAction.Tick);
         State checkRoom = CreateMovementState(movement, "ComprobarSala", inspectRoomAction.Begin, inspectRoomAction.Tick);
@@ -213,7 +231,7 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         StateTransition walkToAdvance = movement.CreateTransition("PuertaPendienteOSalaComprobada",
                             walk, advanceRoom, roomChangePending, statusFlags: StatusFlags.Success);
         // Parar -> ComprobarSala
-        StateTransition stopToChek = movement.CreateTransition("EnAnguloDeComprobacion",
+        StateTransition stopToCheck = movement.CreateTransition("EnAnguloDeComprobacion",
                             stop, checkRoom, statusFlags: StatusFlags.Success);
         // ComprobarSala -> Andar
         // en este caso se ejecuta aquí CompleteStep porque  es necesario actualizar el id del waypoint
@@ -229,24 +247,24 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
                             advanceRoom, goHomeRoom, finalReturn, statusFlags: StatusFlags.Success);
         // RetrocederSalaInicial -> Pausa
         StateTransition HomeToRest = movement.CreateTransition("EnSalaInicial",
-                            goHomeRoom, rest, statusFlags: StatusFlags.None);
+                            goHomeRoom, _pauseState, statusFlags: StatusFlags.None);
         // Pausa -> Andar
-        StateTransition restToWalk = movement.CreateTransition("DescansoTerminado",
-                                            rest, walk, statusFlags: StatusFlags.None);
+        // en este caso se sale de la FSM Nivel 3 de nuevo a la FSM Nivel 2, por ello se realiza
+        // una acción extra para resetear las variables necesarias para el siguiente descanso
+        StateTransition restToWalk = movement.CreateTransition("DescansoTerminado", _pauseState,
+            walk, action: new FunctionalAction(ResetRestEntry, null, null), statusFlags: StatusFlags.Success);
 
         // PERCEPCIONES PUSH FSM NIVEL 2:
         // el guardia llega al punto de descanso
         _enterRest = new PushPerception(HomeToRest);
-        // se agota el tiempo de descanso
-        _leaveRest = new PushPerception(restToWalk);
 
         // se establece el estado inicial
-        movement.SetEntryState(rest);
+        movement.SetEntryState(_pauseState);
 
         return movement;
     }
 
-    // Crea los estados de la FSM de Nivel 2: Movimiento
+    // Crea los estados de la FSM de Nivel 2
     private State CreateMovementState(FSM movement, string name, System.Action startMethod,
         Func<Status> updateMethod)
     {
@@ -258,15 +276,85 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
 
         return state;
     }
+
+    // Crea la máquina de estados del nivel 3 (Pausa)
+    private FSM CreateRestFSM()
+    {
+        // creación de la FSM Nivel 3
+        FSM rest = new FSM();
+
+        // ACCIONES FSM NIVEL 3:
+        GoToCoffeeAction goToCoffeeAction = new GoToCoffeeAction(_coffee, _navigation);
+        GetCoffeeAction getCoffeeAction = new GetCoffeeAction(_coffee);
+        EnterRestRoomAction enterRestAction = new EnterRestRoomAction(_restAccess, _navigation, _patrol.RestTarget);
+        RestAction restAction = new RestAction(_patrol, _navigation, _restSeconds, _restOnStart,
+                                                RestFinished, _restAccess);
+        LeaveRestRoomAction leaveRestAction = new LeaveRestRoomAction(_restAccess, _navigation, _patrol.RestTarget);
+
+        // ESTADOS FSM NIVEL 3:
+        State goToCoffee = CreateRestState(rest, "IrCafetera", goToCoffeeAction.Begin, goToCoffeeAction.Tick);
+        State getCoffee = CreateRestState(rest, "PrepararCafe", getCoffeeAction.Begin, getCoffeeAction.Tick);
+        State prepareRest = CreateRestState(rest, "PrepararDescanso", enterRestAction.Begin, enterRestAction.Tick);
+        State resting = CreateRestState(rest, "Descansar", restAction.Begin, restAction.Tick);
+        State prepareExit = CreateRestState(rest, "PrepararSalida", leaveRestAction.Begin, leaveRestAction.Tick);
+
+        // TRANSICIONES FSM NIVEL 3:
+        // IrCafetera -> PrepararCafe
+        StateTransition goCoffeeToGetCoffee = rest.CreateTransition("EnCafetera", goToCoffee, getCoffee,
+                                                                        statusFlags: StatusFlags.Success);
+        // PrepararCafe -> PrepararDescanso
+        StateTransition getCoffeeToPrepareRest = rest.CreateTransition("CafePreparado", getCoffee, prepareRest,
+                                                                        statusFlags: StatusFlags.Success);
+        // PrepararDescanso -> Descansar
+        StateTransition prepareRestToRest = rest.CreateTransition("DescansoPreparado", prepareRest, resting,
+                                                                        statusFlags: StatusFlags.Success);
+        // Descansar  -> PrepararSalida
+        StateTransition timerFinished = rest.CreateTransition("TiempoDeDescansoAgotado", resting, prepareExit,
+                                                                        statusFlags: StatusFlags.None);
+        // PrepararSalida (FSM Nivel 3) -> Andar (FSM Nivel 2)
+        ExitTransition pauseToWalk = rest.CreateExitTransition(prepareExit, Status.Success,
+                                                            statusFlags: StatusFlags.Success);
+
+        // PERCEPCIONES PUSH FSM NIVEL 3:
+        // se termina el descanso del guardia
+        _leaveRest = new PushPerception(timerFinished);
+
+        // se establece el estado inicial
+        _restEntryState = goToCoffee;
+
+        // se comprueba si al inicio de la patrulla descansa
+        if (_restOnStart && _patrol.IsReady)
+            rest.SetEntryState(goToCoffee);
+        // o sale directamente a patrullar (en ese caso se empieza directamente en el estado de
+        // descansar con 0s para salir inmediatamente)
+        else
+            rest.SetEntryState(resting);
+
+        return rest;
+    }
+
+    // Crea los estados de la FSM de Nivel 3
+    private State CreateRestState(FSM rest, string name, System.Action startMethod,
+        Func<Status> updateMethod)
+    {
+        MovementStateEntry entry = new MovementStateEntry(EnterRestState, startMethod);
+        // se crea el estado
+        State state = rest.CreateState(name, new FunctionalAction(entry.Start, updateMethod, null));
+        // y se guarda su referencia
+        entry.State = state;
+
+        return state;
+    }
+
     #endregion
 
     #region Auxiliar
-    // Inicia o reanuda la acción del estado donde está el guardia (así luego se puede reanudar
-    // esa acción a la mitad cuando se interrumpe por el jugador)
+    // Inicia o reanuda la acción del estado donde está el guardia de la FSM Nivel 2 (así luego 
+    // se puede reanudar esa acción a la mitad cuando se interrumpe por el jugador)
     private void EnterMovementState(State state, System.Action startMethod)
     {
-        Debug.Log($"[Guardia] Estado de {startMethod.Method.DeclaringType.Name} | " +
-                $"Ruta lista = {_patrol.IsReady} | Time Scale = {Time.timeScale}", this);
+        Debug.Log("[MuseumGuardPatrolRunner] Estado de: " + startMethod.Method.DeclaringType.Name + " | "
+                + "Ruta lista = " + _patrol.IsReady + " |  Time Scale = " + Time.timeScale, this);
 
         // se guarda el estado para luego saber a cuál volver
         _activeMovementState = state;
@@ -287,9 +375,34 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     {
         // se guarda el estado y la acción que estuviera realizando el guardia, para
         // luego poder reanudarla
+        // tanto el estado de la FSM Nivel 2
         _movement.SetEntryState(_activeMovementState);
+        // como la FSM Nivel 3 si es necesario
+        if (_activeMovementState == _pauseState && _activeRestState != null)
+            _rest.SetEntryState(_activeRestState);
         _resumeMovement = true;
         _navigation.Suspend();
+    }
+
+    // Inicia o reanuda la acción del estado donde está el guardia de la FSM Nivel 3
+    private void EnterRestState(State state, System.Action startMethod)
+    {
+        // se indican los estados de los dos niveles: FSM Nivel 3 -> _activeRestState, y FSM Nivel 2 -> Pausa
+        _activeRestState = state;
+        EnterMovementState(_pauseState, startMethod);
+    }
+
+    // Resetea las variables necesarias para los siguientes descansos
+    private void ResetRestEntry()
+    {
+        // es necesario resetear el estado inicial, porque en caso de que se interrumpa la
+        // acción del guardia (ve al jugador) mientras está en su proceso de descanso, se llama
+        // al método SuspendMovement, que sobreescribe ese estado inicial para poder reanudar
+        // después la acción donde la hubiera dejado
+        _rest.SetEntryState(_restEntryState);
+
+        if (_coffee != null)
+            _coffee.PutAwayCup();
     }
 
     // Envía la alerta al monstruo de que el guardia ha visto al jugador
@@ -334,6 +447,12 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         return _patrol.AtFinalReturn;
     }
 
+    // Indica si el guardia tiene la tarjeta de seguridad
+    private bool IsCardMissing()
+    {
+        return _restAccess != null && !_restAccess.HasCard;
+    }
+
     // Indica cuando el guardia llega al punto de descanso (acción returnAction)
     private void RestPointReached()
     {
@@ -357,8 +476,8 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         // está inspeccionando?
         bool inspecting = !_resumeMovement && _inspectionState != null && _activeMovementState == _inspectionState;
 
-        _animator.SetBool("Andar", walking);
-        _animator.SetBool("ComprobarSala", inspecting);
+        _animator.SetBool(_walkingParameter, walking);
+        _animator.SetBool(_inspectingParameter, inspecting);
     }
 
     // Para debug (se dibuja la "visión" del guardia)

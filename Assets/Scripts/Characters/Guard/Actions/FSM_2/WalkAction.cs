@@ -18,7 +18,7 @@ public class WalkAction
     {
         if (_route.AtPatrolPoint)
         {
-            _navigation.BeginTravel();
+            _navigation.BeginTravel(_route.CurrentTarget);
         }
     }
 
@@ -42,7 +42,7 @@ public class WalkAction
         if (!_route.AtPatrolPoint)
             return Status.Success;
         // si no, si ese siguiente waypoint es otro punto, el guardia continua andando
-        _navigation.BeginTravel();
+        _navigation.BeginTravel(_route.CurrentTarget);
         return Status.Running;
     }
     

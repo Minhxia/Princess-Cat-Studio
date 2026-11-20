@@ -15,11 +15,13 @@ public class MuseumGuardNavigation
     private readonly bool _agentControlsRotation;   // si el agente gira solo
     private readonly float _patrolStoppingDistance; // distancia a la que para
 
-    private Vector3 _destination;       // punto de destino
+    private Vector3 _destination;       // punto de destino calculado
     private Status _travelStatus;       // en qué estado se encuentra la ruta: éxito, en proceso o fallo
     private float _retryAt;             // punto en el que reintentar encontrar una ruta
     private bool _pathWarningIssued;    // indica si se ha mostrado ya el feedback
     private bool _wasMoving;            // indica si el guardia se estaba moviendo (antes de parar)
+    private Transform _travelTarget;    // punto al que se dirige el guardia (punto de patrulla, cafetera, panel, silla, etc.)
+    private bool _usePatrolSettings;    // indica si el desplazamiento es el de la patrulla o el de descanso
 
     private bool AgentOnNavMesh => _agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh;
     public bool IsWalking => AgentOnNavMesh && !_agent.isStopped && _agent.velocity.sqrMagnitude > 0.01f;
@@ -37,9 +39,12 @@ public class MuseumGuardNavigation
     }
 
     #region Movement
-    // Inicia el desplazamiento en un tramo, por ejemplo: A -> B
-    public void BeginTravel()
+    // Inicia el desplazamiento en un tramo (ej: A -> B) o a un punto concreto (ej: cafetera)
+    // (por defecto se usan los puntos de patrulla -> usePatrolSettings = true)
+    public void BeginTravel(Transform target, bool usePatrolSettings = true)
     {
+        _travelTarget = target;
+        _usePatrolSettings = usePatrolSettings;
         _pathWarningIssued = false;
         RequestPath();
     }
@@ -64,6 +69,12 @@ public class MuseumGuardNavigation
         if (_wasMoving && AgentOnNavMesh)
             _agent.isStopped = false;
     }
+
+    // Permite girar manualmente (desde código) al guardia
+    public void SetManualRotation()
+    {
+        _agent.updateRotation = false;
+    }
     #endregion
 
     #region Path
@@ -72,8 +83,16 @@ public class MuseumGuardNavigation
     {
         // primero se decide si se activa el frenado automático en función del tipo de waypoint
         // y de si tiene inspección
-        bool autoBrake = !_route.AtPatrolPoint || _route.CurrentWaitSeconds > 0f;
+        bool autoBrake = !_usePatrolSettings || !_route.AtPatrolPoint
+                                || _route.CurrentWaitSeconds > 0f;
         _travelStatus = Status.Running;
+
+        // se comprueba si hay un punto al que ir
+        if (_travelTarget == null)
+        {
+            RetryTravel("Falta el punto de destino.");
+            return;
+        }
 
         // se comprueba que el guardia esté en el NavMesh
         if (!AgentOnNavMesh)
@@ -83,8 +102,8 @@ public class MuseumGuardNavigation
         }
 
         // se busca un punto al que el NavMesh pueda ir que esté lo más cerca del waypoint
-        NavMeshQueryFilter filter = new NavMeshQueryFilter{ agentTypeID = _agent.agentTypeID, areaMask = _agent.areaMask };
-        if (!NavMesh.SamplePosition(_route.CurrentTarget.position, out NavMeshHit hit, _sampleRadius, filter))
+        NavMeshQueryFilter filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = _agent.areaMask };
+        if (!NavMesh.SamplePosition(_travelTarget.position, out NavMeshHit hit, _sampleRadius, filter))
         {
             RetryTravel("El punto no tiene NavMesh cerca.");
             return;
@@ -93,7 +112,7 @@ public class MuseumGuardNavigation
         // se configura el guardia (su agente para el NavMesh)
         _destination = hit.position;
         _agent.updateRotation = _agentControlsRotation;
-        _agent.stoppingDistance = _route.AtPatrolPoint ? _patrolStoppingDistance : 0f;
+        _agent.stoppingDistance = _usePatrolSettings && _route.AtPatrolPoint ? _patrolStoppingDistance : 0f;
         _agent.autoBraking = autoBrake;
         // se comprueba si ha llegado a su destino, mirando si está lo suficientemente cerca
         if (Vector3.Distance(_agent.nextPosition, _destination) <= ArrivalTolerance)
@@ -125,15 +144,19 @@ public class MuseumGuardNavigation
         if (!_pathWarningIssued)
         {
             _pathWarningIssued = true;
-            Debug.LogWarning("[MuseumGuardPatrolRoute]" + message + " Se reintentará el tramo: sala = " 
-                            + _route.CurrentRoomID + ", punto = " + _route.CurrentTarget.name);
+            // para evitar buscar el nombre de un gameobjet nulo
+            string targetName = "(sin asignar)";
+            if (_travelTarget != null)
+                targetName = _travelTarget.name;
+            Debug.LogWarning("[MuseumGuardPatrolRoute]" + message + " Se reintentará el tramo: sala = "
+                            + _route.CurrentRoomID + ", punto = " + targetName);
         }
         return Status.Running;
     }
 
     // Indica si el guardia ya ha llegado a su destino
     public Status CheckArrival()
-    {   
+    {
         // si ha llegado bien, sale
         if (_travelStatus == Status.Success)
             return Status.Success;
@@ -150,7 +173,7 @@ public class MuseumGuardNavigation
         // y si aún no ha llegado, sigue
         if (_agent.pathPending)
             return Status.Running;
-        
+
         // se comprueba la distancia a la que se considera que ha llegado a su destino
         float arrivalDistance = _agent.stoppingDistance + ArrivalTolerance;
         // primero, se mira si no tiene ruta
@@ -166,7 +189,7 @@ public class MuseumGuardNavigation
         // también se recalcula
         if (_agent.pathStatus != NavMeshPathStatus.PathComplete)
             return RetryTravel("No hay una ruta completa hasta el destino.");
-        
+
         // finalmente, se comprueba si ha llegado o no para devolver el resultado
         return _agent.remainingDistance <= arrivalDistance ? Status.Success : Status.Running;
     }
