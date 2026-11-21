@@ -87,11 +87,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Armature|Vigilar_Linternal_Guardia (1)
-      takeName: Armature|Vigilar_Linternal_Guardia
-      internalID: 4067806702375547882
+      name: Armature|Andar_Guardia
+      takeName: Armature|Andar_Guardia
+      internalID: -5456623405034733526
       firstFrame: 0
-      lastFrame: 65
+      lastFrame: 35
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -118,7 +118,7 @@ ModelImporter:
     - serializedVersion: 16
       name: Armature|Andar_Linternal_Guardia
       takeName: Armature|Andar_Linternal_Guardia
-      internalID: -5456623405034733526
+      internalID: 3714918305072669227
       firstFrame: 0
       lastFrame: 35
       wrapMode: 0
@@ -147,7 +147,7 @@ ModelImporter:
     - serializedVersion: 16
       name: Armature|Beber_Guardia
       takeName: Armature|Beber_Guardia
-      internalID: -169734407948801438
+      internalID: -1138241407346957834
       firstFrame: 0
       lastFrame: 35
       wrapMode: 0
@@ -176,7 +176,7 @@ ModelImporter:
     - serializedVersion: 16
       name: Armature|Sentarse_Levantarse_Guardia
       takeName: Armature|Sentarse_Levantarse_Guardia
-      internalID: -157169923086977576
+      internalID: 1615435994913743120
       firstFrame: 0
       lastFrame: 35
       wrapMode: 0
@@ -205,7 +205,7 @@ ModelImporter:
     - serializedVersion: 16
       name: Armature|Vigilar_Linternal_Guardia
       takeName: Armature|Vigilar_Linternal_Guardia
-      internalID: 3714918305072669227
+      internalID: 6516689969404215878
       firstFrame: 0
       lastFrame: 65
       wrapMode: 0

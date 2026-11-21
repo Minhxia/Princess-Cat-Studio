@@ -6,6 +6,7 @@ public class CameraDetect : MonoBehaviour
 
     MeshRenderer renderer;
 
+    [System.NonSerialized]
     public Plane[] cameraFrustum;
 
     Collider collider;
