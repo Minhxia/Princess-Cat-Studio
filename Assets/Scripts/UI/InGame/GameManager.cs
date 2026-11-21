@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 // fases de la partida
 public enum GamePhase
@@ -19,8 +20,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerHands _playerHands;  // para comprobar si lleva a un niño de la mano
     [SerializeField] private GameEndController _gameEndController;  // para el fin de partida
 
+    [Header("Emergency exits")]
+    [SerializeField] private UnityEvent _onExitsUnlocked = new UnityEvent();
+
     // lista con los niños rescatados
     private readonly List<ChildCompanion> _rescuedChildren = new List<ChildCompanion>();
+    
+    private bool _exitsUnlocked;    // indica si las salidas se han desbloqueado
 
     #region Getters
     public static GameManager Instance { get; private set; }
@@ -28,6 +34,7 @@ public class GameManager : MonoBehaviour
     public bool IsPlaying => CurrentPhase == GamePhase.Playing;
     public int RescuedChildrenCount => _rescuedChildren.Count;  // recuento de niños rescatados
     public int RequiredChildren => _requiredChildren;
+    public bool AreExitsUnlocked => _exitsUnlocked;
     #endregion
 
     #region Unity
@@ -64,6 +71,24 @@ public class GameManager : MonoBehaviour
             Instance = null;
     }
     #endregion
+
+    // Desbloquea las salidas de emergencia cuando se utiliza la tarjeta en uno de los
+    // paneles
+    public bool UnlockExits()
+    {
+        if (!isActiveAndEnabled || !IsPlaying)
+            return false;
+
+        if (_exitsUnlocked)
+            return true;
+
+        // se desbloquean todas las salidas de emergencia
+        _exitsUnlocked = true;
+        _onExitsUnlocked.Invoke();
+        Debug.Log("[GameManager] Salidas de emergencia habilitadas.");
+        
+        return true;
+    }
 
     // Registra el rescate de un niño y termina el juego con victoria si
     // ha rescatado a todos

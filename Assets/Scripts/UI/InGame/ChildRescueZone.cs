@@ -29,7 +29,8 @@ public class ChildRescueZone : MonoBehaviour
         if (_gameManager == null)
             _gameManager = GameManager.Instance;
 
-        if (_gameManager == null || _playerHands == null || !_gameManager.IsPlaying)
+        if (_gameManager == null || _playerHands == null || !_gameManager.IsPlaying
+                || !_gameManager.AreExitsUnlocked)
             return;
 
         // solo el jugador puede activar la zona para rescatar a un niño

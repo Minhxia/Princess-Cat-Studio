@@ -7,11 +7,20 @@ using UnityEngine.Events;
 public class SecurityCardReader : MonoBehaviour
 {
     #region Variables
+    // tipo de panel de seguridad en función de la puerta
+    public enum ReaderMode
+    {
+        SecurityRoom,   // garita de seguridad 
+        EmergencyExit   // salida de emergencia
+    }
+
+    [SerializeField] private ReaderMode _readerMode = ReaderMode.SecurityRoom;
     [SerializeField] private SecurityCard _acceptedCard;
     [SerializeField] private SecurityDoor _door;
+    [SerializeField] private GameManager _gameManager;
     [SerializeField] private PlayerHands _playerHands;
     [SerializeField, Min(0.1f)] private float _useDistance = 2.5f;  // distancia máxima para usar el lector
-    
+
     // para posible feedback (sonido, texto, etc.):
     [SerializeField] private UnityEvent _onAccepted = new UnityEvent();
     [SerializeField] private UnityEvent _onDenied = new UnityEvent();
@@ -36,22 +45,38 @@ public class SecurityCardReader : MonoBehaviour
         TryRead(card, _playerHands.transform);
     }
 
-    // Intenta leer la tarjeta de seguridad
+    // Intenta leer la tarjeta de seguridad para abrir la puerta
     public bool TryRead(SecurityCard card, Transform user)
     {
-        // primero se comprueba que hay una tarjeta, que es válida para el lector
-        // y quién la quiere utilizar
-        bool valid = card != null && card == _acceptedCard && card.IsCarriedBy(user);
-        // si eso es válido, se comprueba la distancia al lector
-        valid = valid && Vector3.Distance(user.position, transform.position) <= _useDistance;
-        // también se comprueba que hay una puerta
-        valid = valid && _door != null && _door.isActiveAndEnabled;
+        // para las puertas de las salidas de emergencia
+        bool exitsUnlocked = _readerMode == ReaderMode.EmergencyExit && _gameManager.AreExitsUnlocked;
+        // para la puerta de la garita de seguridad
+        bool hasCard = card != null && card == _acceptedCard && card.IsCarriedBy(user);
 
-        // si no se cumple todo, se deniega el acceso a la garita
+        // primero se comprueba que hay una tarjeta, que es válida para el lector,
+        // quién la quiere utilizar y su distancia al lector
+        // además se diferencia qué tipo de puerta es
+        bool valid = user != null && Vector3.Distance(user.position, transform.position) <= _useDistance
+                        && _door != null && _door.isActiveAndEnabled
+                        && (hasCard || exitsUnlocked);
+
+        // en caso de ser un panel de una puerta de salida, también se comprueba que
+        // se esté jugando
+        if (_readerMode == ReaderMode.EmergencyExit)
+            valid = valid && _gameManager.IsPlaying;
+
+        // si no se cumple lo necesario para un tipo de puerta, se deniega el acceso
         if (!valid)
         {
             _onDenied.Invoke();
             Debug.Log("[SecurityCardReader] Acceso denegado.", this);
+            return false;
+        }
+
+        // se comprueba si se pueden desbloquear las salidas de emergencia
+        if (_readerMode == ReaderMode.EmergencyExit && !_gameManager.UnlockExits())
+        {
+            _onDenied.Invoke();
             return false;
         }
 
