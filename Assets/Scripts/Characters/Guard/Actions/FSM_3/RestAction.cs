@@ -15,7 +15,7 @@ public class RestAction
     private bool _firstRest = true; // primer descanso de la partida
     private float _remaining;       // tiempo restante del descanso
 
-    public RestAction(MuseumGuardPatrolRoute route, MuseumGuardNavigation navigation, 
+    public RestAction(MuseumGuardPatrolRoute route, MuseumGuardNavigation navigation,
         float restSeconds, bool restOnStart, System.Action onFinished, GuardRestAccess access = null)
     {
         _route = route;
@@ -39,7 +39,21 @@ public class RestAction
 
         // se establece si está preparado para sentarse
         if (_access != null)
-            _access.SetSitting(_access.ReadyToSit && _remaining > 0f);
+        {
+            bool hasRestTime = _remaining > 0f;
+
+            // dentro de la garita descansa sentado
+            bool sit = hasRestTime
+                && _access.IsInsideRoom
+                && _access.ReadyToSit;
+
+            // fuera de la garita descansa de pie
+            bool drinkStanding = hasRestTime
+                && !_access.IsInsideRoom;
+
+            _access.SetSitting(sit);
+            _access.SetDrinkingStanding(drinkStanding);
+        }
     }
 
     // Actualiza el tiempo restante de descanso
@@ -48,13 +62,13 @@ public class RestAction
         // se prepara la ruta para hacer la patrulla de nuevo
         if (!_route.IsReady)
             return Status.Running;
-        
+
         // se actualiza el tiempo restante
         _remaining -= Time.deltaTime;
         // si no queda, se manda el aviso para terminar
         if (_remaining <= 0f)
             _onFinished();  // se ejecuta RestFinished del runner
-        
+
         // si aún queda tiempo, continua descansando
         return Status.Running;
     }

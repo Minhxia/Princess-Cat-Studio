@@ -82,6 +82,7 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     [SerializeField] private Animator _animator;
     [SerializeField] private string _walkingParameter = "Andar";
     [SerializeField] private string _inspectingParameter = "ComprobarSala";
+    [SerializeField] private string _restModeParameter = "EnDescanso";
 
     // Referencias
     private MuseumGuardPatrolRoute _patrol;     // guarda el recorrido
@@ -475,9 +476,12 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         bool walking = !_resumeMovement && _navigation != null && _navigation.IsWalking;
         // está inspeccionando?
         bool inspecting = !_resumeMovement && _inspectionState != null && _activeMovementState == _inspectionState;
-
+        // está descansando?
+        bool restMode = _pauseState != null && _activeMovementState == _pauseState;
+        
         _animator.SetBool(_walkingParameter, walking);
         _animator.SetBool(_inspectingParameter, inspecting);
+        _animator.SetBool(_restModeParameter, restMode);
     }
 
     // Para debug (se dibuja la "visión" del guardia)

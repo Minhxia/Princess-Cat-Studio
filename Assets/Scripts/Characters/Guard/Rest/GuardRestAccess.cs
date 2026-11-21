@@ -14,6 +14,7 @@ public class GuardRestAccess : MonoBehaviour
     [SerializeField] private Transform _seatPoint;    // punto donde está la silla interior
     [SerializeField] private Animator _animator;
     [SerializeField] private string _sittingParameter = "Sentarse"; // nombre para la animación
+    [SerializeField] private string _standingDrinkParameter = "BeberDePies";
     [SerializeField, Min(0f)] private float _standUpSeconds = 1f;   // tiempo para levantarse de la silla
 
     private bool _insideRoom;   // indica si el guardia está dentro de la garita
@@ -96,5 +97,15 @@ public class GuardRestAccess : MonoBehaviour
 
         if (_animator != null && !string.IsNullOrEmpty(_sittingParameter))
             _animator.SetBool(_sittingParameter, sitting);
+    }
+
+    // Activa o desactiva la animación de beber café de pies
+    public void SetDrinkingStanding(bool drinking)
+    {
+        if (_animator != null
+            && !string.IsNullOrEmpty(_standingDrinkParameter))
+        {
+            _animator.SetBool(_standingDrinkParameter, drinking);
+        }
     }
 }

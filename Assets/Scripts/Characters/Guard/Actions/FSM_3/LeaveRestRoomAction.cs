@@ -38,6 +38,8 @@ public class LeaveRestRoomAction
         if (_access == null)
             return;
 
+        // termina la animación de beber de pie
+        _access.SetDrinkingStanding(false);
         // si el guardia está sentado, se prepara para levantarse
         _access.SetReadyToSit(false);
         if (_access.IsSitting)
@@ -67,7 +69,7 @@ public class LeaveRestRoomAction
                 if (_standRemaining <= 0f)
                     BeginExit();
                 break;
-            
+
             // se dirige al punto interior junto a la puerta (cuando está en la garita)
             case RestExitStage.Inside:
                 // se comprueba si ya ha llegado a la puerta
@@ -93,7 +95,7 @@ public class LeaveRestRoomAction
                     _stage = RestExitStage.Outside;
                 }
                 break;
-            
+
             // avanza y cruza el punto exterior (el que está al otro lado de la puerta, tienda de regalos)
             case RestExitStage.Outside:
                 // se comprueba si ya ha llegado a ese punto 
@@ -113,7 +115,7 @@ public class LeaveRestRoomAction
         // ha completado la preparación para salir
         if (_stage == RestExitStage.Done)
             return Status.Success;
-        
+
         return Status.Running;
     }
     #endregion

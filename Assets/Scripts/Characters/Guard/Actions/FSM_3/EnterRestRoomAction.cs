@@ -155,7 +155,8 @@ public class EnterRestRoomAction
                 // en cambio si es la silla exterior, se gira progresivamente al guardia
                 // y después, se actualiza la fase
                 if (_access.FaceSeat(seatPoint)) {
-                    _access.SetReadyToSit(true);
+                    //_access.SetReadyToSit(true);
+                    _access.SetReadyToSit(_access.IsInsideRoom);
                     _stage = RestEntryStage.Done;
                 }
 
