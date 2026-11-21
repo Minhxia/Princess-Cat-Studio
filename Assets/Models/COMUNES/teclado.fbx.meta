@@ -3,7 +3,17 @@ guid: 9342cc921a884034cb797d384ab43d70
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: teclado_base
+    second: {fileID: 2100000, guid: 59cd1399134cc9043a03e88e104b0a5f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: teclas_teclado
+    second: {fileID: 2100000, guid: 6123db0d261fbb744ba1cf8004a1d96b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

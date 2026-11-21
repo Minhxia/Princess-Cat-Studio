@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: letras_Carteles_SALAS
-    second: {fileID: 2100000, guid: e8a74ad232175c24491f437d7d73f5f8, type: 2}
+    second: {fileID: 2100000, guid: f9c7b0bde77dcbf4cb96f71d4e75a029, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -18,7 +18,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: seccion_Arte
-    second: {fileID: 2100000, guid: 390eca379f53d4f4d83f9ecfe4037bbc, type: 2}
+    second: {fileID: 2100000, guid: e8a74ad232175c24491f437d7d73f5f8, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
