@@ -20,6 +20,9 @@ public class PlayerHands : MonoBehaviour
     [SerializeField] private GameObject _leftItem;
     [SerializeField] private GameObject _rightItem;
 
+    [Header("Animation")]
+    [SerializeField] private PlayerArmsAnimator _armsAnimator;
+
     private GameObject _leftUsedItem;
     private GameObject _rightUsedItem;
 
@@ -165,6 +168,10 @@ public class PlayerHands : MonoBehaviour
             _rightItem = item;
         }
 
+        // animación de los brazos/manos
+        if (_armsAnimator != null)
+            _armsAnimator.PlayPickup(useLeftHand);
+
         return true;
     }
     #endregion
@@ -208,28 +215,45 @@ public class PlayerHands : MonoBehaviour
     // Intenta soltar el objeto o niño de la mano izquierda
     public bool TryDropLeft()
     {
+        bool dropped;
+
         // niño de la mano izda
         if (_leftChild != null)
         {
             _leftChild.ReleaseHand();
-            return true;
+            dropped = true;
+        }
+        else
+        {
+            dropped = TryDrop(ref _leftItem);
         }
 
-        // objeto
-        return TryDrop(ref _leftItem);
+        if (dropped && _armsAnimator != null)
+            _armsAnimator.PlayDrop(true);
+
+        return dropped;
     }
 
     // Intenta soltar el objeto o niño de la mano derecha
     public bool TryDropRight()
     {
+        bool dropped;
+
         // niño de la mano dcha
         if (_rightChild != null)
         {
             _rightChild.ReleaseHand();
-            return true;
+            dropped = true;
+        }
+        else
+        {
+            dropped = TryDrop(ref _rightItem);
         }
 
-        return TryDrop(ref _rightItem);
+        if (dropped && _armsAnimator != null)
+            _armsAnimator.PlayDrop(false);
+        
+        return dropped;
     }
     #endregion
 
@@ -395,14 +419,19 @@ public class PlayerHands : MonoBehaviour
                 return false;
         }
 
-        if (useLeftHand) {
+        if (useLeftHand)
+        {
             _leftChild = child;
             EndUseLeft();
         }
-        else {
+        else
+        {
             _rightChild = child;
             EndUseRight();
         }
+
+        if (_armsAnimator != null)
+            _armsAnimator.PlayPickup(useLeftHand);
 
         return true;
     }

@@ -36,6 +36,7 @@ public class CharacterMovement3D : MonoBehaviour
     #endregion
 
     public bool IsCrouching => _isCrouching; // para poder leerla desde PlayerFootSteps
+    public bool IsRunning => _wantsToRun && !_isCrouching;
     public bool HasMovementInput => _moveDirection.sqrMagnitude > 0f; // para dárselo a ChildCompanion
 
     #region Unity
