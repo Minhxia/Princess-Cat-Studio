@@ -70,15 +70,47 @@ public class SneakingMonsterRunner : BehaviourRunner
         // creación de la FSM
         FSM monster = new FSM();
 
-        // ESTADOS:
+		// ESTADOS:
+		// --BACKUP--
+		/*
         State wait = monster.CreateState("Esperar", new FunctionalAction(waitAction.Begin, waitAction.Tick, null));
         State chase = monster.CreateState("Perseguir", new FunctionalAction(chaseAction.Begin, chaseAction.Tick, null));
         State stop = monster.CreateState("Parar", new FunctionalAction(stopAction.Begin, stopAction.Tick, null));
         State returnHome = monster.CreateState("Reiniciar", new FunctionalAction(returnAction.Begin, returnAction.Tick, null));
-        State kill = monster.CreateState("Matar", new FunctionalAction(killAction.Begin, killAction.Tick, null));
+        */
 
-        // PERCEPCIONES:
-        ConditionPerception playerSeenInZone = new ConditionPerception(null, CheckPlayerSeenInZone, null);
+        // Aquí se dice lo mismo pero con dos acciones adicionales
+		State wait = monster.CreateState("Esperar", new FunctionalAction(() =>
+		{
+			waitAction.Begin();
+			notificarAudio(AudioManager.nivelAlertaEnemigos.Normal);
+		}, waitAction.Tick, null));
+
+
+
+		State chase = monster.CreateState("Perseguir", new FunctionalAction(() =>
+		{
+			chaseAction.Begin();
+			notificarAudio(AudioManager.nivelAlertaEnemigos.Perseguir);
+		}, chaseAction.Tick, null));
+
+
+		State stop = monster.CreateState("Parar", new FunctionalAction(() =>
+		{
+			stopAction.Begin();
+			notificarAudio(AudioManager.nivelAlertaEnemigos.Alerta);
+		}, stopAction.Tick, null));
+
+		State returnHome = monster.CreateState("Reiniciar", new FunctionalAction(() =>
+		{
+			returnAction.Begin();
+			notificarAudio(AudioManager.nivelAlertaEnemigos.Normal);
+		}, returnAction.Tick, null));
+
+		State kill = monster.CreateState("Matar", new FunctionalAction(killAction.Begin, killAction.Tick, null));
+
+		// PERCEPCIONES:
+		ConditionPerception playerSeenInZone = new ConditionPerception(null, CheckPlayerSeenInZone, null);
         ConditionPerception playerUnseenInZone = new ConditionPerception(null, CheckPlayerUnseenInZone, null);
         ConditionPerception playerUnseenOutsideZone = new ConditionPerception(null, CheckPlayerUnseenOutsideZone, null);
         ConditionPerception monsterObserved = new ConditionPerception(null, CheckObserved, null);
@@ -265,5 +297,12 @@ public class SneakingMonsterRunner : BehaviourRunner
         Gizmos.DrawWireSphere(Application.isPlaying ? _homePosition : transform.position,
             _zoneRadius);
     }
-    #endregion
+	private void notificarAudio(AudioManager.nivelAlertaEnemigos estado)
+	{
+		if (AudioManager.Instance != null)
+		{
+			AudioManager.Instance.enemyNewState(gameObject.GetEntityId(), estado);
+		}
+	}
+	#endregion
 }
