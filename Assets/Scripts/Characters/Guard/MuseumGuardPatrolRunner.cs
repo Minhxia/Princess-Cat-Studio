@@ -10,7 +10,7 @@ using UnityEngine.Events;
 
 [RequireComponent(typeof(NavMeshAgent))]
 
-// Clase que monta y gestiona las máquinas de estado del Guardia (las acciones están dentro de los estados)
+// Clase que crea y gestiona las máquinas de estado del Guardia (las acciones están dentro de los estados)
 public class MuseumGuardPatrolRunner : BehaviourRunner
 {
     #region Variables

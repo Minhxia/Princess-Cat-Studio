@@ -4,8 +4,8 @@ using UnityEngine;
 
 [RequireComponent(typeof(CharacterController), typeof(PlayerHands))]
 
-// Clase que gestiona el movimiento de un personaje en 3D,
-// incluyendo caminar, correr, agacharse y saltar
+// Clase que gestiona el movimiento de un personaje en 3D, incluyendo caminar, correr y 
+// agacharse.
 public class CharacterMovement3D : MonoBehaviour
 {
     #region Variables
@@ -14,8 +14,8 @@ public class CharacterMovement3D : MonoBehaviour
     [SerializeField] private float _runSpeed = 6f;
     [SerializeField] private float _crouchSpeed = 1.5f;
 
-    [Header("Jump")]
-    [SerializeField] private float _jumpHeight = 1.5f;
+    [Header("Force")]
+    //[SerializeField] private float _jumpHeight = 1.5f;
     [SerializeField] private float _gravity = -9.81f;
 
     [Header("Crouch")]
@@ -31,7 +31,7 @@ public class CharacterMovement3D : MonoBehaviour
 
     private bool _wantsToRun;
     private bool _wantsToCrouch;
-    private bool _jumpRequested;
+    //private bool _jumpRequested;
     private bool _isCrouching;
     #endregion
 
@@ -186,14 +186,13 @@ public class CharacterMovement3D : MonoBehaviour
         }
 
         // si el personaje ha solicitado un salto, está en el suelo y no está agachado
-        if(_jumpRequested && isGrounded && !_isCrouching)
+        /*if(_jumpRequested && isGrounded && !_isCrouching)
         {
             // se calcula la velocidad vertical necesaria para alcanzar la altura de salto
             _verticalVelocity = Mathf.Sqrt(_jumpHeight * -2f * _gravity);
-        }
-
-        // TODO: cambiar esto en caso de querer permitir doble salto, triple salto, etc.
-        _jumpRequested = false; // no hay doble salto
+        }*/
+        
+        //_jumpRequested = false; // no hay doble salto
 
         // se aplica la gravedad a la velocidad vertical
         _verticalVelocity += _gravity * Time.deltaTime;
@@ -221,9 +220,9 @@ public class CharacterMovement3D : MonoBehaviour
     }
 
     // Indica si el personaje quiere saltar
-    public void RequestJump()
+    /*public void RequestJump()
     {
         _jumpRequested = true;
-    }
+    }*/
     #endregion
 }
