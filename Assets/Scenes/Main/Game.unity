@@ -827,6 +827,7 @@ GameObject:
   - component: {fileID: 244458604}
   - component: {fileID: 244458603}
   - component: {fileID: 244458602}
+  - component: {fileID: 244458611}
   m_Layer: 0
   m_Name: CharacterHearing_1
   m_TagString: Untagged
@@ -968,16 +969,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3c71d2aad5e8e142857cf7fc58aff2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundOclusion
-  listener: {fileID: 0}
-  oclusionMask:
+  _listener: {fileID: 0}
+  _occlusionLayer:
     serializedVersion: 2
-    m_Bits: 128
-  clearVolumen: 1
-  clearCutoff: 22000
-  blockedVolumen: 0.307
-  blockedCutoff: 1931
-  smoothingSpeed: 2
-  maxDistanceVolume: 20
+    m_Bits: 0
+  _clearVolumen: 1
+  _clearCutoff: 22000
+  _blockedVolumen: 0.3
+  _blockedCutoff: 1200
+  _smoothingSpeed: 5
+  _maxDistanceVolume: 20
 --- !u!114 &244458605
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -990,11 +991,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 209f64c8750511647afe773756881b0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHearing
-  hearingSensivity: 2
-  soundObstacles:
+  _hearingSensivity: 1
+  _soundObstaclesLayer:
     serializedVersion: 2
-    m_Bits: 128
-  personaje: {fileID: 0}
+    m_Bits: 0
 --- !u!82 &244458606
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1185,6 +1185,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!195 &244458611
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 244458601}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &253691738
 GameObject:
   m_ObjectHideFlags: 0
@@ -2459,6 +2481,7 @@ GameObject:
   - component: {fileID: 675961967}
   - component: {fileID: 675961966}
   - component: {fileID: 675961965}
+  - component: {fileID: 675961974}
   m_Layer: 0
   m_Name: SoundOclusion_2
   m_TagString: Untagged
@@ -2600,16 +2623,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3c71d2aad5e8e142857cf7fc58aff2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundOclusion
-  listener: {fileID: 0}
-  oclusionMask:
+  _listener: {fileID: 0}
+  _occlusionLayer:
     serializedVersion: 2
-    m_Bits: 128
-  clearVolumen: 1
-  clearCutoff: 22000
-  blockedVolumen: 0.307
-  blockedCutoff: 1931
-  smoothingSpeed: 2
-  maxDistanceVolume: 20
+    m_Bits: 0
+  _clearVolumen: 1
+  _clearCutoff: 22000
+  _blockedVolumen: 0.3
+  _blockedCutoff: 1200
+  _smoothingSpeed: 5
+  _maxDistanceVolume: 20
 --- !u!114 &675961968
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2622,11 +2645,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 209f64c8750511647afe773756881b0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHearing
-  hearingSensivity: 2
-  soundObstacles:
+  _hearingSensivity: 1
+  _soundObstaclesLayer:
     serializedVersion: 2
-    m_Bits: 128
-  personaje: {fileID: 0}
+    m_Bits: 0
 --- !u!82 &675961969
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2817,6 +2839,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!195 &675961974
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 675961964}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &689109949
 GameObject:
   m_ObjectHideFlags: 0
@@ -2856,8 +2900,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHands
   _leftHandGrip: {fileID: 642560890}
   _rightHandGrip: {fileID: 1610000239}
+  _startingItem: {fileID: 0}
   _leftItem: {fileID: 0}
   _rightItem: {fileID: 0}
+  _armsAnimator: {fileID: 0}
 --- !u!114 &689109951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2877,6 +2923,12 @@ MonoBehaviour:
   _pickupLayerMask:
     serializedVersion: 2
     m_Bits: 64
+  _interactLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _pickupPromptPanel: {fileID: 0}
+  _pickupPromptText: {fileID: 0}
+  _cluePanel: {fileID: 0}
 --- !u!114 &689109952
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2931,7 +2983,6 @@ MonoBehaviour:
   _backwardKey: 33
   _leftKey: 15
   _rightKey: 18
-  _jumpKey: 1
   _runKey: 51
   _crouchKey: 55
   _pickupKey: 20
@@ -2952,7 +3003,6 @@ MonoBehaviour:
   _walkSpeed: 3
   _runSpeed: 6
   _crouchSpeed: 1.5
-  _jumpHeight: 2.5
   _gravity: -9.81
   _crouchHeight: 1
 --- !u!143 &689109956
@@ -3011,17 +3061,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c4bb2a31e1aaaf4689fcb8a66f742a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFootSteps
-  movimientoPersonaje: {fileID: 689109956}
-  audioSource: {fileID: 689109959}
   walkClips:
   - {fileID: 8300000, guid: 181df72378e0060438d0c89db1d4f00d, type: 3}
   runClips:
   - {fileID: 8300000, guid: 4483bf3a0f5343045a421a8be472d72b, type: 3}
-  walkInterval: 0.8
-  runInterval: 0.5
-  runSpeed: 6
-  walkRadius: 5
-  runRadius: 10
+  _walkInterval: 0.5
+  _runInterval: 0.3
+  _runSpeed: 4
+  _walkRadius: 5
+  _runRadius: 12
+  _crouchVolumeMultiplier: 0.35
+  _crouchRadius: 1.5
 --- !u!82 &689109959
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4195,6 +4245,7 @@ GameObject:
   - component: {fileID: 1095335022}
   - component: {fileID: 1095335021}
   - component: {fileID: 1095335020}
+  - component: {fileID: 1095335029}
   m_Layer: 0
   m_Name: SoundOclusion_1
   m_TagString: Untagged
@@ -4336,16 +4387,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3c71d2aad5e8e142857cf7fc58aff2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundOclusion
-  listener: {fileID: 0}
-  oclusionMask:
+  _listener: {fileID: 0}
+  _occlusionLayer:
     serializedVersion: 2
-    m_Bits: 128
-  clearVolumen: 1
-  clearCutoff: 22000
-  blockedVolumen: 0.307
-  blockedCutoff: 1931
-  smoothingSpeed: 2
-  maxDistanceVolume: 20
+    m_Bits: 0
+  _clearVolumen: 1
+  _clearCutoff: 22000
+  _blockedVolumen: 0.3
+  _blockedCutoff: 1200
+  _smoothingSpeed: 5
+  _maxDistanceVolume: 20
 --- !u!114 &1095335023
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4358,11 +4409,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 209f64c8750511647afe773756881b0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHearing
-  hearingSensivity: 2
-  soundObstacles:
+  _hearingSensivity: 1
+  _soundObstaclesLayer:
     serializedVersion: 2
-    m_Bits: 128
-  personaje: {fileID: 0}
+    m_Bits: 0
 --- !u!82 &1095335024
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4553,6 +4603,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!195 &1095335029
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1095335019}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &1248224421
 GameObject:
   m_ObjectHideFlags: 0
@@ -4801,6 +4873,7 @@ GameObject:
   - component: {fileID: 1299978292}
   - component: {fileID: 1299978291}
   - component: {fileID: 1299978290}
+  - component: {fileID: 1299978299}
   m_Layer: 0
   m_Name: CharacterHearing_2
   m_TagString: Untagged
@@ -4942,16 +5015,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3c71d2aad5e8e142857cf7fc58aff2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundOclusion
-  listener: {fileID: 0}
-  oclusionMask:
+  _listener: {fileID: 0}
+  _occlusionLayer:
     serializedVersion: 2
-    m_Bits: 128
-  clearVolumen: 1
-  clearCutoff: 22000
-  blockedVolumen: 0.307
-  blockedCutoff: 1931
-  smoothingSpeed: 2
-  maxDistanceVolume: 20
+    m_Bits: 0
+  _clearVolumen: 1
+  _clearCutoff: 22000
+  _blockedVolumen: 0.3
+  _blockedCutoff: 1200
+  _smoothingSpeed: 5
+  _maxDistanceVolume: 20
 --- !u!114 &1299978293
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4964,11 +5037,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 209f64c8750511647afe773756881b0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHearing
-  hearingSensivity: 2
-  soundObstacles:
+  _hearingSensivity: 1
+  _soundObstaclesLayer:
     serializedVersion: 2
-    m_Bits: 128
-  personaje: {fileID: 0}
+    m_Bits: 0
 --- !u!82 &1299978294
 AudioSource:
   m_ObjectHideFlags: 0
@@ -5159,6 +5231,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!195 &1299978299
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299978289}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!1 &1341248092
 GameObject:
   m_ObjectHideFlags: 0
