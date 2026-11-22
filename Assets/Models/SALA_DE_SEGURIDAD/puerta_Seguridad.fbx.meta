@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ea31cdadabd07724f89414ecd4bf6736
+guid: 6ebe70895dc924f45a6495d55775f9cc
 ModelImporter:
   serializedVersion: 24600
   internalIDToNameTable: []
@@ -7,23 +7,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Ruedas_Silla
-    second: {fileID: 2100000, guid: 0051869438ba57048aa6c20be495d035, type: 2}
+      name: Material.001
+    second: {fileID: 2100000, guid: cb1afc548d5ab5d4381f55ba28581284, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: barandilla_puerta
-    second: {fileID: 2100000, guid: eb58330e352009b44a6a1089aa8bb7fd, type: 2}
+      name: letras_seguridad
+    second: {fileID: 2100000, guid: 159e5690e74949b43889c064d40a476b, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: cristalespuerta
-    second: {fileID: 2100000, guid: f3495b5e94279e14591de1b25c28f1d8, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: puerta_salida
-    second: {fileID: 2100000, guid: e583e32e11ffa9c43a4f34b613325be9, type: 2}
+      name: letras_seguridad_mate
+    second: {fileID: 2100000, guid: d2d9e79536272dc44ad23fe445f23f8e, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
