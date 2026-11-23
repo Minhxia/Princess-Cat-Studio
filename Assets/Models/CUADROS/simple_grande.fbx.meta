@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Dorado_viejo_Armario_Seguridad.001
-    second: {fileID: 2100000, guid: d076d9d09567e0c4b92d09df6d9c6330, type: 2}
+    second: {fileID: 2100000, guid: 9eb4881e47cdd2f4e9d7647978c086db, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -18,7 +18,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: marco_cuadro
-    second: {fileID: 2100000, guid: c9111d967543fa249a0850eb75da7337, type: 2}
+    second: {fileID: 2100000, guid: ccea5334615d1f04daf44b09defdf62e, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
