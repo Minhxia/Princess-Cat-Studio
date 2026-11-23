@@ -5590,7 +5590,7 @@ Transform:
   m_GameObject: {fileID: 317544527}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 44.01, y: 1.85, z: 18.78}
+  m_LocalPosition: {x: 48.73, y: 1.85, z: 20.75}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9871,7 +9871,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHands
   _leftHandGrip: {fileID: 642560890}
   _rightHandGrip: {fileID: 1610000239}
-  _startingItem: {fileID: 174120253}
+  _startingItem: {fileID: 559468771}
   _leftItem: {fileID: 0}
   _rightItem: {fileID: 0}
   _armsAnimator: {fileID: 689109960}
@@ -19692,7 +19692,7 @@ Transform:
   m_GameObject: {fileID: 1486445753}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 51.69, y: 1.17, z: 21.49}
+  m_LocalPosition: {x: 51.69, y: 2.52, z: 21.49}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -21112,7 +21112,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &1611232698
 Light:
   m_ObjectHideFlags: 0
@@ -24131,7 +24131,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 4b913f7050f122741b6f8c94aac8ccac, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: a927c7caf6455e64f8530c4a9f25095a, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &1968337754
 GameObject:

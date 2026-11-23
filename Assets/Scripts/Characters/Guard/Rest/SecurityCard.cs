@@ -29,7 +29,7 @@ public class SecurityCard : MonoBehaviour
         // se guardan las referencias de la tarjeta
         _renderers = GetComponentsInChildren<Renderer>(true);
         _colliders = GetComponentsInChildren<Collider>(true);
-        
+
         _rendererStates = new bool[_renderers.Length];
         _colliderStates = new bool[_colliders.Length];
     }
@@ -100,10 +100,16 @@ public class SecurityCard : MonoBehaviour
     // Comprueba quién tiene la tarjeta
     public bool IsCarriedBy(Transform carrier)
     {
-        // para hacer la comprobación se comprueba si la tarjeta es hija del gameobject que
-        // ha pedido la comprobación, es decir, si se llama desde el guardia, se comprobará
-        // si el guardia quién la lleva como hija
-        return carrier != null && transform.IsChildOf(carrier);
+        // si no hay un personaje al que comprobar
+        if (carrier == null)
+            return false;
+
+        // si la tarjeta está desactivada, no se considera disponible
+        if (!gameObject.activeInHierarchy)
+            return false;
+
+        // comprueba si la tarjeta pertenece a ese personaje
+        return transform.IsChildOf(carrier);
     }
 
     // Comprueba si se puede coger la tarjeta
