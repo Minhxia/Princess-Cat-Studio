@@ -49,6 +49,30 @@ public class GuardRestAccess : MonoBehaviour
     public float StandUpSeconds => _standUpSeconds;
     #endregion
 
+    // Gira al guardia hacia el panel de seguridad
+    public bool FaceReader()
+    {
+        if (_reader == null)
+            return false;
+
+        // dirección desde el guardia hasta el panel
+        Vector3 direction = _reader.transform.position - transform.position;
+        direction.y = 0f;
+
+        // si la dirección es demasiado pequeña
+        if (direction.sqrMagnitude < 0.0001f)
+            return true;
+
+        // orientación hacia el panel
+        Quaternion target = Quaternion.LookRotation(direction, Vector3.up);
+        // el guardia gira progresivamente
+        transform.rotation = Quaternion.RotateTowards(
+            transform.rotation, target, 180f * Time.deltaTime);
+
+        // indica si ha terminado de girar
+        return Quaternion.Angle(transform.rotation, target) <= 0.1f;
+    }
+
     // Pide la lectura de la tarjeta al lector del panel de seguridad
     public bool ReadCard()
     {

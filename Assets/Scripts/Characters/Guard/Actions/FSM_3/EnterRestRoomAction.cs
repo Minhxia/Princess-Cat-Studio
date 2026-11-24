@@ -4,13 +4,14 @@ using BehaviourAPI.Core;
 // indica en qué fase está el guardia al entrar
 public enum RestEntryStage
 {
-    Reader,     // se dirige al panel para utilizar la tarjeta
-    Door,       // espera a que la puerta se abra
-    Inside,     // cruza la puerta al interior de la garita
-    Seat,       // se dirige a donde está la silla
-    FacingSeat, // se coloca en la orientación correcta para sentarse
-    Outside,    // se dirige a descansar en la tienda de regalos (no tiene la tarjeta)
-    Done        // ha terminado de prepararse para descansar
+    Reader,         // se dirige al panel para utilizar la tarjeta
+    FacingReader,   // se gira para mirar al panel
+    Door,           // espera a que la puerta se abra
+    Inside,         // cruza la puerta al interior de la garita
+    Seat,           // se dirige a donde está la silla
+    FacingSeat,     // se coloca en la orientación correcta para sentarse
+    Outside,        // se dirige a descansar en la tienda de regalos (no tiene la tarjeta)
+    Done         // ha terminado de prepararse para descansar
 }
 
 // Acción del estado PrepararDescanso. Se encarga de preparar al guardia para descansar en
@@ -67,8 +68,8 @@ public class EnterRestRoomAction
             return Status.Success;
 
         // si el jugador le roba la tarjeta cuando está entrando a la garita,
-        bool enteringRoom = _stage == RestEntryStage.Reader || _stage == RestEntryStage.Door
-                                || _stage == RestEntryStage.Inside;
+        bool enteringRoom = _stage == RestEntryStage.Reader || _stage == RestEntryStage.FacingReader
+                                || _stage == RestEntryStage.Door || _stage == RestEntryStage.Inside;
         // cambia su punto de descanso
         if (enteringRoom && !_access.HasCard && !_access.IsInsideRoom)
         {
@@ -79,28 +80,39 @@ public class EnterRestRoomAction
         // se comprueba en qué fase está el guardia
         switch (_stage)
         {
-            // se dirige al panel para utilizar la tarjeta 
+            // se dirige al panel para utilizar la tarjeta
             case RestEntryStage.Reader:
-                // se comprueba si ha llegado
                 if (_navigation.CheckArrival() == Status.Success)
                 {
-                    // si es así, se para
+                    // se detiene y permite controlar el giro desde código
                     _navigation.Stop();
-                    // y utiliza la tarjeta en el panel para abrir la puerta
-                    if (_access.ReadCard())
-                    {
-                        _admitted = true;
-                        _access.Door.HoldOpenForGuard();
-                        // se actualiza la fase
-                        _stage = RestEntryStage.Door;
-                    }
-                    // si no puede, se dirige al punto de la tienda de regalos
-                    else
-                    {
-                        _navigation.BeginTravel(_outsidePoint, false);
-                        // se actualiza la fase
-                        _stage = RestEntryStage.Outside;
-                    }
+                    _navigation.SetManualRotation();
+
+                    // comienza a orientarse hacia el panel
+                    _stage = RestEntryStage.FacingReader;
+                }
+                break;
+
+            // gira hacia el panel antes de utilizar la tarjeta
+            case RestEntryStage.FacingReader:
+                // mientras sigue girando, permanece en esta fase
+                if (!_access.FaceReader())
+                    break;
+
+                // cuando termina de girar, intenta utilizar la tarjeta
+                if (_access.ReadCard())
+                {
+                    _admitted = true;
+                    _access.Door.HoldOpenForGuard();
+
+                    // espera a que se abra la puerta
+                    _stage = RestEntryStage.Door;
+                }
+                else
+                {
+                    // si se deniega el acceso, descansa fuera
+                    _navigation.BeginTravel(_outsidePoint, false);
+                    _stage = RestEntryStage.Outside;
                 }
                 break;
 
@@ -154,7 +166,8 @@ public class EnterRestRoomAction
 
                 // en cambio si es la silla exterior, se gira progresivamente al guardia
                 // y después, se actualiza la fase
-                if (_access.FaceSeat(seatPoint)) {
+                if (_access.FaceSeat(seatPoint))
+                {
                     //_access.SetReadyToSit(true);
                     _access.SetReadyToSit(_access.IsInsideRoom);
                     _stage = RestEntryStage.Done;
