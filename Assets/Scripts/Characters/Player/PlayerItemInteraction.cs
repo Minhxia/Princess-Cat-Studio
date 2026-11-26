@@ -172,6 +172,14 @@ public class PlayerItemInteraction : MonoBehaviour
     {
         if (!isActiveAndEnabled || Time.timeScale <= 0f) return;
 
+        // si el jugador está en una zona de rescate
+        ChildRescueZone rescueZone = ChildRescueZone.ActiveZone;
+        if (rescueZone != null && rescueZone.CanRescue)
+        {
+            rescueZone.TryRescueChildren();
+            return;
+        }
+
         // si se está leyendo una pista, F cierra el panel
         if (_cluePanel != null && _cluePanel.IsOpen)
         {
@@ -186,13 +194,7 @@ public class PlayerItemInteraction : MonoBehaviour
             return;
         }
 
-        /*if (!_hands.HasFreeHand)
-        {
-            Debug.Log("[PlayerItemInteraction] Las dos manos están ocupadas.");
-            return;
-        }*/
         // AHORA dejamos recoger objetos siempre, y se suelta siempre el de la mano derecha
-
         if (!TryFindInteractionItem(out GameObject item, out InteractableItem interactable))
         {
             Debug.Log("[PlayerItemInteraction] No se ha encontrado ningún objeto para recoger o interactuar.");

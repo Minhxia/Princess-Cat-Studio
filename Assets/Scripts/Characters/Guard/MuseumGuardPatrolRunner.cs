@@ -51,13 +51,18 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     [Serializable] public class GuardSightingEvent : UnityEvent<int, Vector3> { }
 
     [Header("Patrol")]
-    [SerializeField] private Room[] _rooms = Array.Empty<Room>();   // recorrido por las salas
     [SerializeField] private Transform _restPoint;  // punto al que vuelve el guardia a descansar (sala de seguridad)
     [SerializeField, Min(0f)] private float _restSeconds = 60f; // tiempo que está en ese estado de Pausa (su descanso tras la patrulla)
     [SerializeField] private bool _restOnStart;     // indica si empieza la patrulla en Pausa
     // para recalcular la ruta del navmesh:
     [SerializeField, Min(0.01f)] private float _navMeshSampleRadius = 0.35f;
     [SerializeField, Min(0.1f)] private float _pathRetrySeconds = 2f;
+
+    [Header("Patrol zones")]
+    [SerializeField] private Room[] _artRooms = Array.Empty<Room>();   // recorrido por las salas de Pintura
+    [SerializeField] private Room[] _sculptureRooms = Array.Empty<Room>(); // recorrido por las salas de Escultura
+    [SerializeField] private Room[] _archaeologyRooms = Array.Empty<Room>(); // recorrido por las salas de Arqueología
+    [SerializeField, Range(0, 2)] private int _patrolIndex;  // 0: Pintura, 1: Escultura, 2: Arqueologia
 
     [Header("Inspection")]
     [SerializeField] private Transform _player;             // para obtener la posición del jugador
@@ -102,6 +107,9 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     private PushPerception _leaveRest;  // señal para pasar al estado Andar desde Pausa
     private PushPerception _pendingRestSignal; // señal de las anteriores que queda por lanzar
     private bool _resumeMovement; // después de haber visto al jugador, reanuda la acción donde la había dejado
+
+
+    private bool _changePatrolAfterRest; // indica que ha completado una patrulla
     #endregion
 
     #region Getters
@@ -123,6 +131,18 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
             // el resto de salas
             return _patrol.CurrentRoomID;
         }
+    }
+
+    // Devuelve las salas del recorrido seleccionado
+    private Room[] GetPatrolRooms(int index)
+    {
+        if (index == 1)
+            return _sculptureRooms;
+
+        if (index == 2)
+            return _archaeologyRooms;
+
+        return _artRooms;
     }
 
     // Devuelve la referencia al evento en que el guardia ve al jugador
@@ -156,8 +176,20 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     protected override BehaviourGraph CreateGraph()
     {
         NavMeshAgent agent = GetComponent<NavMeshAgent>();
+
+        // primera patrulla
+        // se limita el id a las tres rutas
+        _patrolIndex = Mathf.Clamp(_patrolIndex, 0, 2);
+        // como todavía no se ha completado ninguna patrulla
+        _changePatrolAfterRest = false;
+
+        // obtiene las salas de la ruta elegida en el Inspector
+        Room[] initialRooms = GetPatrolRooms(_patrolIndex);
+        // y crea esa ruta
+        _patrol = new MuseumGuardPatrolRoute(initialRooms, _restPoint);
+
         // se crea la ruta
-        _patrol = new MuseumGuardPatrolRoute(_rooms, _restPoint, IsCardMissing);
+        //_patrol = new MuseumGuardPatrolRoute(_artRooms, _restPoint, IsCardMissing);
         // su navegación
         _navigation = new MuseumGuardNavigation(agent, _patrol, _navMeshSampleRadius, _pathRetrySeconds);
         // su "visión" (es decir, para saber si ve al jugador)
@@ -404,6 +436,13 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
 
         if (_coffee != null)
             _coffee.PutAwayCup();
+
+        // se cambia de zona solo si ha completado una patrulla antes
+        if (_changePatrolAfterRest)
+        {
+            _changePatrolAfterRest = false;
+            SelectNextPatrol();
+        }
     }
 
     // Envía la alerta al monstruo de que el guardia ha visto al jugador
@@ -457,6 +496,10 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     // Indica cuando el guardia llega al punto de descanso (acción returnAction)
     private void RestPointReached()
     {
+        // se ha completado una patrulla y ha regresado al punto de descanso
+        _changePatrolAfterRest = true;
+
+        // se solicita la entrada en el estado Pausa
         _pendingRestSignal = _enterRest;
     }
 
@@ -464,6 +507,48 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
     private void RestFinished()
     {
         _pendingRestSignal = _leaveRest;
+    }
+
+    // Selecciona la zona que recorrerá el guardia después de su descanso
+    // (el orden es 0 -> 1 -> 2 -> 0)
+    private void SelectNextPatrol()
+    {
+        int nextIndex = _patrolIndex + 1;
+
+        // después de Arqueologia vuelve a Pintura (rutas en bucle)
+        if (nextIndex >= 3)
+            nextIndex = 0;
+
+        Room[] nextRooms = _artRooms;
+        string nextName = "Pintura";
+
+        if (nextIndex == 1)
+        {
+            nextRooms = _sculptureRooms;
+            nextName = "Escultura";
+        }
+        else if (nextIndex == 2)
+        {
+            nextRooms = _archaeologyRooms;
+            nextName = "Arqueologia";
+        }
+
+        // se intenta activar el siguiente recorrido
+        if (_patrol.TryChangeRoute(nextRooms, _restPoint))
+        {
+            _patrolIndex = nextIndex;
+
+            Debug.Log("[Guardia] Siguiente patrulla: " + nextName, this);
+        }
+        else
+        {
+            // si falta configurar una zona, se repite la ruta actual
+            _patrol.Reset();
+
+            Debug.LogWarning(
+                "[Guardia] No se ha podido activar la ruta de " + nextName + ". Se repetira la "
+                    + "patrulla actual.", this);
+        }
     }
 
     // Actualiza las animaciones del guardia
@@ -478,7 +563,7 @@ public class MuseumGuardPatrolRunner : BehaviourRunner
         bool inspecting = !_resumeMovement && _inspectionState != null && _activeMovementState == _inspectionState;
         // está descansando?
         bool restMode = _pauseState != null && _activeMovementState == _pauseState;
-        
+
         _animator.SetBool(_walkingParameter, walking);
         _animator.SetBool(_inspectingParameter, inspecting);
         _animator.SetBool(_restModeParameter, restMode);

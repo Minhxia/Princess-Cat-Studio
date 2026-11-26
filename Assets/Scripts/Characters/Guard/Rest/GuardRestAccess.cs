@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 // Clase que gestiona todo lo que tiene que hacer el guardia al llegar a la puerta de la
 // garita con el panel y acceder a su interior.
@@ -17,9 +18,17 @@ public class GuardRestAccess : MonoBehaviour
     [SerializeField] private string _standingDrinkParameter = "BeberDePies";
     [SerializeField, Min(0f)] private float _standUpSeconds = 1f;   // tiempo para levantarse de la silla
 
+    [Header("Sitting height")]
+    [SerializeField] private Transform _guardModel;         // modelo visual del guardia (NO su padre)
+    [SerializeField] private float _seatedLocalY = -0.7f;   // altura para sentarse
+    [SerializeField, Min(0f)] private float _sitHeightSeconds = 1f; // tiempo para sentarse a esa altura
+
     private bool _insideRoom;   // indica si el guardia está dentro de la garita
     private bool _readyToSit;   // indica si ya está colocado correctamente para sentarse
     private bool _isSitting;    // indica si ya está sentado
+
+    private float _standingLocalY;   // altura que tenía antes de sentarse
+    private Coroutine _heightRoutine;
     #endregion
 
     #region Getters
@@ -117,10 +126,52 @@ public class GuardRestAccess : MonoBehaviour
     // Activa o desactiva la animación de sentarse
     public void SetSitting(bool sitting)
     {
-        _isSitting = sitting;
-
         if (_animator != null && !string.IsNullOrEmpty(_sittingParameter))
             _animator.SetBool(_sittingParameter, sitting);
+
+        if (_isSitting == sitting)
+            return;
+
+        _isSitting = sitting;
+
+        if (_guardModel == null)
+            return;
+
+        // se detiene el ajuste anterior si todavía está en curso
+        if (_heightRoutine != null)
+        {
+            StopCoroutine(_heightRoutine);
+            _heightRoutine = null;
+        }
+
+        float targetY;
+        float duration;
+
+        if (sitting)
+        {
+            // se guarda la altura que tiene justo antes de sentarse
+            _standingLocalY = _guardModel.localPosition.y;
+
+            targetY = _seatedLocalY;
+            duration = _sitHeightSeconds;
+        }
+        else
+        {
+            // al levantarse, se recupera la altura anterior
+            targetY = _standingLocalY;
+            duration = _standUpSeconds;
+        }
+
+        if (duration <= 0f)
+        {
+            Vector3 position = _guardModel.localPosition;
+            position.y = targetY;
+            _guardModel.localPosition = position;
+            return;
+        }
+
+        _heightRoutine = StartCoroutine(
+            AdjustModelHeight(targetY, duration));
     }
 
     // Activa o desactiva la animación de beber café de pies
@@ -131,5 +182,35 @@ public class GuardRestAccess : MonoBehaviour
         {
             _animator.SetBool(_standingDrinkParameter, drinking);
         }
+    }
+
+    // Cambia progresivamente la altura local del modelo del guardia
+    private IEnumerator AdjustModelHeight(float targetY, float duration)
+    {
+        float startY = _guardModel.localPosition.y;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+
+            // se modifica únicamente la altura
+            Vector3 position = _guardModel.localPosition;
+
+            // se suaviza el comienzo y el final del movimiento
+            position.y = Mathf.SmoothStep(startY, targetY, progress);
+
+            _guardModel.localPosition = position;
+
+            yield return null;
+        }
+
+        // se asegura que termina exactamente en la altura indicada
+        Vector3 finalPosition = _guardModel.localPosition;
+        finalPosition.y = targetY;
+        _guardModel.localPosition = finalPosition;
+
+        _heightRoutine = null;
     }
 }

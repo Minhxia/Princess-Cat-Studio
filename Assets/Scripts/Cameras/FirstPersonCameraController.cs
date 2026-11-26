@@ -17,7 +17,8 @@ public class FirstPersonCameraController : MonoBehaviour
 
     [Header("Look")]
     [SerializeField] private float _mouseSensitivity = 0.1f;
-    [SerializeField] private float _maxVerticalAngle = 80f;
+    [SerializeField, Range(0f, 90f)] private float _maxLookUpAngle = 80f;
+    [SerializeField, Range(0f, 90f)] private float _maxLookDownAngle = 87f;
 
     [Header("Head Bob")]
     [SerializeField] private float _walkBobFrequency = 1.6f;
@@ -36,7 +37,7 @@ public class FirstPersonCameraController : MonoBehaviour
     private bool _waitingForCaptureClickRelease = true;
     private bool _isPaused;
 
-    public bool CanUseHandObjects { get; private set; } 
+    public bool CanUseHandObjects { get; private set; }
     #endregion
 
     #region Unity Methods
@@ -50,7 +51,7 @@ public class FirstPersonCameraController : MonoBehaviour
             WebGLInput.stickyCursorLock = false;
         #endif
 
-        UnlockCursor();   
+        UnlockCursor();
     }
 
     private void Update()
@@ -99,14 +100,10 @@ public class FirstPersonCameraController : MonoBehaviour
         // se rota la cámara mediante el transform del padre (personaje)
         // en el eje Y (izda/dcha)
         transform.Rotate(0f, mouseMovement.x * _mouseSensitivity, 0f);
-         // se rota la propia cámara en el eje X (arriba/abajo)
+        // se rota la propia cámara en el eje X (arriba/abajo)
         _verticalAngle -= mouseMovement.y * _mouseSensitivity;
-        _verticalAngle = Mathf.Clamp(
-            _verticalAngle,
-            -_maxVerticalAngle,
-            _maxVerticalAngle
-        );
-        _firstPersonCamera.localRotation = Quaternion.Euler(_verticalAngle, 0f, 0f);  
+        _verticalAngle = Mathf.Clamp(_verticalAngle, -_maxLookUpAngle, _maxLookDownAngle);
+        _firstPersonCamera.localRotation = Quaternion.Euler(_verticalAngle, 0f, 0f);
     }
 
     private void LateUpdate()
@@ -119,7 +116,7 @@ public class FirstPersonCameraController : MonoBehaviour
         float eyeHeight = feetHeight + _characterController.height * _eyeHeightRatio;
 
         UpdateHeadBob();
-        
+
         // se conserva la posición local de la cámara en X y Z, y se ajusta solo la Y
         Vector3 cameraPosition = _firstPersonCamera.localPosition;
         cameraPosition.y = eyeHeight + _bobOffset;
@@ -165,7 +162,7 @@ public class FirstPersonCameraController : MonoBehaviour
     {
         _isPaused = paused;
 
-        if(paused)
+        if (paused)
         {
             UnlockCursor();
         }
@@ -199,8 +196,8 @@ public class FirstPersonCameraController : MonoBehaviour
         {
             _bobPhase = 0f;
             _bobOffset = Mathf.MoveTowards(
-                _bobOffset, 
-                0f, 
+                _bobOffset,
+                0f,
                 _bobReturnSpeed * Time.deltaTime
             );
         }
