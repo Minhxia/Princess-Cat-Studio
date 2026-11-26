@@ -29,6 +29,8 @@ public class SecurityCardReader : MonoBehaviour
     // Comprueba si es el jugador quién está utilizando la tarjeta en el lector
     public void UseByPlayer()
     {
+        //Debug.Log("[Panel] Se ha llamado a UseByPlayer.", this);
+
         if (_playerHands == null || !_playerHands.isActiveAndEnabled || Time.timeScale <= 0f)
             return;
 

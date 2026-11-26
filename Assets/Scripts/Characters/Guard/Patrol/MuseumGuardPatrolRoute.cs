@@ -39,7 +39,7 @@ public class MuseumGuardPatrolRoute
     #endregion
 
     #region Getters
-    public bool IsReady { get; }
+    public bool IsReady { get; private set; }
 
     // devuelve el id de la sala inicial (la sala 12 -> tienda de regalos)
     public int CurrentRoomID { get; private set; } = HomeRoomID;
@@ -280,6 +280,35 @@ public class MuseumGuardPatrolRoute
         _steps.Add(new Step(StepKind.Backtrack, door.childSide, child.id));
         _steps.Add(new Step(StepKind.Backtrack, door.parentSide, parent.id));
 
+        return true;
+    }
+    #endregion
+
+    #region Routes
+    // Cambia el recorrido del guardia (por pintura, escultura y arqueología)
+    public bool TryChangeRoute(Room[] rooms, Transform restPoint)
+    {
+        if (rooms == null || rooms.Length == 0)
+        {
+            Debug.LogError("[MuseumGuardPatrolRoute] La siguiente ruta no tiene salas asignadas.");
+            return false;
+        }
+
+        // primero se construye y se comprueba el nuevo recorrido por separado
+        MuseumGuardPatrolRoute nextRoute = new MuseumGuardPatrolRoute(
+            rooms, restPoint, _cardMissing);
+
+        // si falla, se conserva la ruta anterior
+        if (!nextRoute.IsReady)
+            return false;
+
+        // se copian los pasos al gestor
+        _steps.Clear();
+        _steps.AddRange(nextRoute._steps);
+        _firstReturnStep = nextRoute._firstReturnStep;
+        IsReady = true;
+
+        Reset();
         return true;
     }
     #endregion
