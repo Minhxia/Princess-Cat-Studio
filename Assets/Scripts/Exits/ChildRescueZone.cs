@@ -29,10 +29,9 @@ public class ChildRescueZone : MonoBehaviour
     {
         get
         {
-            if (!_playerInside || _gameManager == null || _door == null
-                || _playerHands == null || !_gameManager.IsPlaying
-                || !_gameManager.AreExitsUnlocked || !_door.IsFullyOpen
-                || Time.timeScale <= 0f)
+            if (!_playerInside || _gameManager == null || _door == null || _playerHands == null
+                    || !_gameManager.IsPlaying || !_door.IsUnlocked || !_door.IsFullyOpen
+                    || Time.timeScale <= 0f)
                 return false;
 
             // se tiene en cuenta la posibilidad de que el jugador salve a dos niños a la vez

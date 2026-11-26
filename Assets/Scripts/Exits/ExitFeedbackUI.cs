@@ -26,9 +26,9 @@ public class ExitFeedbackUI : MonoBehaviour
     }
 
     // Muestra el feedback del desbloqueo de las puertas de emergencia
-    public void ShowExitsUnlocked()
+    public void ShowExitUnlocked()
     {
-        ShowTemporaryMessage("Emergency exits unlocked.");
+        ShowTemporaryMessage("Emergency exit unlocked.");
     }
 
     // Muestra el feedback del rescate de los niños

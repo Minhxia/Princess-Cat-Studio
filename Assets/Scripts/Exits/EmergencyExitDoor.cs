@@ -12,9 +12,11 @@ public class EmergencyExitDoor : MonoBehaviour
     private Animator _animator;
     private bool _wantsOpen;
     private bool _fullyOpen;
+    private bool _isUnlocked;
     #endregion
 
-    public bool IsFullyOpen => _fullyOpen; // indica si la puerta está abierta por completo
+    public bool IsFullyOpen => _fullyOpen;  // indica si la puerta está abierta por completo
+    public bool IsUnlocked => _isUnlocked;  // indica si la puerta está desbloqueada
 
     #region Unity
     private void Awake()
@@ -58,7 +60,7 @@ public class EmergencyExitDoor : MonoBehaviour
         if (other != _playerCollider || _gameManager == null)
             return;
 
-        if (_gameManager.IsPlaying && _gameManager.AreExitsUnlocked)
+        if (_gameManager.IsPlaying && _isUnlocked)
             SetOpen(true);
     }
 
@@ -76,11 +78,26 @@ public class EmergencyExitDoor : MonoBehaviour
         _animator.SetBool("Open", open);
     }
 
+    // Desbloquea la puerta para siempre (solo una cada vez)
+    public bool Unlock()
+    {
+        if (!isActiveAndEnabled || _gameManager == null
+            || !_gameManager.IsPlaying)
+            return false;
+
+        if (_isUnlocked)
+            return true;
+
+        _isUnlocked = true;
+        Debug.Log("[EmergencyExitDoor] Puerta de emergencia desbloqueada.", this);
+        return true;
+    }
+
     #region Events
     // Evento de animación para el final del clip de apertura
     public void OnFinishedOpening()
     {
-        _fullyOpen = _wantsOpen && _gameManager != null && _gameManager.AreExitsUnlocked;
+        _fullyOpen = _wantsOpen && _isUnlocked;
     }
 
     // Evento de animación para el final del clip de cierre

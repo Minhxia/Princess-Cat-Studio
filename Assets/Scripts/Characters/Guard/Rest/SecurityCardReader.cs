@@ -15,11 +15,16 @@ public class SecurityCardReader : MonoBehaviour
     }
 
     [SerializeField] private ReaderMode _readerMode = ReaderMode.SecurityRoom;
+
+    [Header("References")]
     [SerializeField] private SecurityCard _acceptedCard;
     [SerializeField] private SecurityDoor _door;
+    [SerializeField] private EmergencyExitDoor _emergencyDoor;
+    [SerializeField] private ExitFeedbackUI _feedback;
     [SerializeField] private GameManager _gameManager;
     [SerializeField] private PlayerHands _playerHands;
     [SerializeField, Min(0.1f)] private float _useDistance = 5f;  // distancia máxima para usar el lector
+
 
     // para posible feedback (sonido, texto, etc.):
     [SerializeField] private UnityEvent _onAccepted = new UnityEvent();
@@ -58,28 +63,36 @@ public class SecurityCardReader : MonoBehaviour
         // las salidas de emergencia se desbloquean una vez para toda la partida
         if (_readerMode == ReaderMode.EmergencyExit)
         {
-            if (_gameManager == null || !_gameManager.IsPlaying)
+            if (_gameManager == null || !_gameManager.IsPlaying
+       || _emergencyDoor == null || !_emergencyDoor.isActiveAndEnabled)
             {
                 DenyAccess();
                 return false;
             }
 
-            // si ya se han desbloqueado no hace falta volver a usar la tarjeta
-            if (_gameManager.AreExitsUnlocked)
+            // si la puerta ya está desbloqueada, no se pide la tarjeta otra vez
+            if (_emergencyDoor.IsUnlocked)
                 return true;
 
-            if (!HasAcceptedCard(card, user) || !_gameManager.UnlockExits())
+            if (!HasAcceptedCard(card, user) || !_emergencyDoor.Unlock())
             {
                 DenyAccess();
                 return false;
             }
 
-            // se muestra el aviso general de desbloqueo de las puertas de emergencia
+            // se muestra el feedback solo la primera vez que se desbloquea la puerta
+            if (_feedback != null)
+                _feedback.ShowExitUnlocked();
+            else
+                Debug.LogWarning(
+                    "[SecurityCardReader] Falta asignar ExitFeedbackUI.",
+                    this);
+
             _onAccepted.Invoke();
             return true;
         }
 
-        // La puerta de la garita simplemente se bloque y desbloquea cada vez
+        // aa puerta de la garita simplemente se bloquea y desbloquea cada vez
         if (_door == null || !_door.isActiveAndEnabled
             || !HasAcceptedCard(card, user))
         {
