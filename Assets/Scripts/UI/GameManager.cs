@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,17 +16,18 @@ public enum GamePhase
 // Clase que gestiona el estado y el progreso de la partida.
 public class GameManager : MonoBehaviour
 {
-    [Header("Game objetive")]
+    [Header("Game objective")]
     [SerializeField, Min(1)] private int _requiredChildren = 3; // número de niños que tiene que rescatar
     [SerializeField] private PlayerHands _playerHands;  // para comprobar si lleva a un niño de la mano
     [SerializeField] private GameEndController _gameEndController;  // para el fin de partida
+    [SerializeField, Min(2f)] private float _victoryDelaySeconds = 3f; // para que de tiempo a ver el feedback de los niños
 
     [Header("Emergency exits")]
     [SerializeField] private UnityEvent _onExitsUnlocked = new UnityEvent();
 
     // lista con los niños rescatados
     private readonly List<ChildCompanion> _rescuedChildren = new List<ChildCompanion>();
-    
+
     private bool _exitsUnlocked;    // indica si las salidas se han desbloqueado
 
     #region Getters
@@ -86,10 +88,11 @@ public class GameManager : MonoBehaviour
         _exitsUnlocked = true;
         _onExitsUnlocked.Invoke();
         Debug.Log("[GameManager] Salidas de emergencia habilitadas.");
-        
+
         return true;
     }
 
+    #region Win
     // Registra el rescate de un niño y termina el juego con victoria si
     // ha rescatado a todos
     public bool TryRescueChild(ChildCompanion child)
@@ -123,14 +126,26 @@ public class GameManager : MonoBehaviour
         // si ya se ha rescatado a todos
         if (RescuedChildrenCount >= _requiredChildren)
         {
-            // se actualiza a la fase de victoria y se muestra el fin de partida
+            // se actualiza a la fase de victoria y comienza el fin de partida
             CurrentPhase = GamePhase.Victory;
-            _gameEndController.Win();
+            StartCoroutine(EndVictoryAfterDelay());
         }
 
         return true;
     }
 
+    // Corrutina para dar unos segundos a que se muestre el feedback del rescate
+    // antes de pasar a la pantalla de fin de partida
+    private IEnumerator EndVictoryAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(_victoryDelaySeconds);
+
+        if (_gameEndController != null)
+            _gameEndController.Win();
+    }
+    #endregion
+
+    #region Lose
     // Termina el juego con derrota
     public void Lose()
     {
@@ -145,4 +160,5 @@ public class GameManager : MonoBehaviour
         CurrentPhase = GamePhase.Defeat;
         _gameEndController.Lose();
     }
+    #endregion
 }
